@@ -74,8 +74,9 @@ void main() {
     expect(receiverSource, contains('TrackingWatchdogScheduler.schedule'));
   });
 
-  test('Flutter start and stop paths arm and cancel the watchdog', () {
+  test('central tracking lifecycle arms and cancels the watchdog', () {
     final wrapper = File('lib/tracking_watchdog.dart');
+    final service = File('lib/geolocation_service.dart').readAsStringSync();
     final screen = File('lib/main_screen.dart').readAsStringSync();
 
     expect(wrapper.existsSync(), isTrue);
@@ -83,7 +84,15 @@ void main() {
     expect(wrapperSource, contains("MethodChannel('traccar_client/watchdog')"));
     expect(wrapperSource, contains("invokeMethod<void>('arm')"));
     expect(wrapperSource, contains("invokeMethod<void>('cancel')"));
-    expect(screen, contains('TrackingWatchdog.arm()'));
-    expect(screen, contains('TrackingWatchdog.cancel()'));
+
+    expect(service, contains('await tracker.start();'));
+    expect(service, contains('await TrackingWatchdog.arm();'));
+    expect(service, contains('await tracker.stop();'));
+    expect(service, contains('await TrackingWatchdog.cancel();'));
+
+    expect(screen, contains('await GeolocationService.start();'));
+    expect(screen, contains('await GeolocationService.stop();'));
+    expect(screen, isNot(contains('TrackingWatchdog.arm()')));
+    expect(screen, isNot(contains('TrackingWatchdog.cancel()')));
   });
 }

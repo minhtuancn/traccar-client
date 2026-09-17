@@ -1,0 +1,66 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+      - 'beta/**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Verify and build Android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Verify pinned SDK core
+        working-directory: vendor/traccar-client-sdk
+        run: ./gradlew :core:allTests --no-configuration-cache
+
+      - name: Flutter dependencies
+        run: flutter pub get
+
+      - name: Flutter analyze
+        run: flutter analyze
+
+      - name: Flutter tests
+        run: flutter test
+
+      - name: Build debug APK
+        run: flutter build apk --debug
+
+      - name: Rename APK
+        run: |
+          VERSION=$(awk '/^version:/{print $2}' pubspec.yaml | cut -d+ -f1)
+          cp build/app/outputs/flutter-apk/app-debug.apk "traccar-client-${VERSION}-debug.apk"
+          sha256sum "traccar-client-${VERSION}-debug.apk" > "traccar-client-${VERSION}-debug.apk.sha256"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: traccar-client-android-debug
+          path: |
+            traccar-client-*-debug.apk
+            traccar-client-*-debug.apk.sha256
+          if-no-files-found: error
+          retention-days: 30

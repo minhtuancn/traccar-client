@@ -26,4 +26,19 @@ void main() {
 
     expect(workflow, contains('submodules: recursive'));
   });
+
+  test('enhanced status exposes durable queue telemetry', () {
+    final bridge = File(
+      'android/app/src/main/kotlin/org/traccar/client/EnhancedTrackingBridge.kt',
+    ).readAsStringSync();
+    final service = File('lib/enhanced_tracking_service.dart').readAsStringSync();
+    final screen = File('lib/status_screen.dart').readAsStringSync();
+
+    expect(bridge, contains('"pendingPositionCount"'));
+    expect(bridge, contains('"lastSuccessfulSyncMillis"'));
+    expect(service, contains('pendingPositionCount'));
+    expect(service, contains('lastSuccessfulSyncMillis'));
+    expect(screen, contains('Queued positions'));
+    expect(screen, contains('Last successful sync'));
+  });
 }

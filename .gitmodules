@@ -1,4 +1,4 @@
 [submodule "vendor/traccar-client-sdk"]
 	path = vendor/traccar-client-sdk
 	url = https://github.com/minhtuancn/traccar-client-sdk.git
-	branch = feature/fresh-position-heartbeat
+	branch = feature/smart-offline-batch-sync

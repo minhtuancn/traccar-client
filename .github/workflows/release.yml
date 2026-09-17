@@ -2,7 +2,9 @@ name: Release
 
 on:
   push:
-    tags: ['v*']
+    tags:
+      - 'v*'
+      - '!v*-*'
   workflow_dispatch:
     inputs:
       platform:
@@ -20,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          submodules: recursive
 
       - uses: actions/setup-java@v5
         with:
@@ -123,6 +127,8 @@ jobs:
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v6
+        with:
+          submodules: recursive
 
       - uses: subosito/flutter-action@v2
         with:

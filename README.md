@@ -8,8 +8,9 @@ This repository is a fork of the official [Traccar Client](https://www.traccar.o
 - **Fresh-position Heartbeat** — heartbeat attempts a fresh fix and refuses to present arbitrarily old cached coordinates as a new location.
 - **Adaptive Tracking Profiles** — automatic Driving, Walking, Stationary, Charging, and Battery Saver profiles adjust the effective GPS configuration at runtime.
 - **Smart Sync** — Instant, Batch, and Offline delivery modes reuse the existing SQLDelight durable queue. `Sync now` can explicitly drain queued positions.
+- **Sync telemetry** — Status shows pending queued-position count and the last successful queued upload time.
 - **Managed Android deployment** — Device Admin/Device Owner support, boot/update recovery, and optional exclusion from Recent Apps.
-- **Status visibility** — the Status screen shows the current adaptive profile, sync mode, and diagnostic logs.
+- **Status visibility** — the Status screen shows the current adaptive profile, sync mode, queue health, and diagnostic logs.
 
 The Android app consumes the enhanced native SDK from the pinned `vendor/traccar-client-sdk` git submodule. Gradle dependency substitution replaces the official native Maven dependency with that pinned source build. This keeps builds reproducible without publishing over Traccar's official Maven coordinates.
 
@@ -31,6 +32,7 @@ Pinned minhtuancn/traccar-client-sdk
           +---- Fresh Heartbeat
           +---- Adaptive Tracking Profiles
           +---- Smart Sync
+          +---- Queue / sync telemetry
           |
           v
 SQLDelight Durable Queue
@@ -41,9 +43,9 @@ Traccar / OsmAnd-compatible HTTP endpoint
 
 See:
 
-- [`docs/ENHANCED_TRACKING.md`](docs/ENHANCED_TRACKING.md) — fork architecture, settings, build and verification workflow.
+- [`docs/ENHANCED_TRACKING.md`](docs/ENHANCED_TRACKING.md) — fork architecture, settings, status telemetry, build and verification workflow.
 - [`docs/ANDROID_MANAGED_DEVICE.md`](docs/ANDROID_MANAGED_DEVICE.md) — managed-device / Device Owner deployment and Android recovery behavior.
-- [`docs/superpowers/plans/2026-09-17-resilient-tracking.md`](docs/superpowers/plans/2026-09-17-resilient-tracking.md) — implementation plan/history.
+- [`docs/superpowers/plans/2026-09-17-resilient-tracking.md`](docs/superpowers/plans/2026-09-17-resilient-tracking.md) — implementation status, remaining device gates and history.
 
 ## Build
 
@@ -77,7 +79,7 @@ cd vendor/traccar-client-sdk
 ./gradlew :core:check --no-configuration-cache
 ```
 
-The repository also includes `.woodpecker.yml` so the same SDK tests, Flutter analysis/tests, and Android debug build can run on the self-hosted CI pipeline.
+The repository also includes `.woodpecker.yml` so the same SDK tests, Flutter analysis/tests, and Android debug build can run on the self-hosted CI pipeline. GitHub pull-request CI is configured to run for stacked feature branches as well as pull requests to `main`.
 
 ## Android behavior and privacy
 

@@ -5,8 +5,15 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    private var enhancedTrackingBridge: EnhancedTrackingBridge? = null
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        enhancedTrackingBridge?.dispose()
+        enhancedTrackingBridge = EnhancedTrackingBridge(
+            flutterEngine.dartExecutor.binaryMessenger,
+        )
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -24,6 +31,12 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+    }
+
+    override fun onDestroy() {
+        enhancedTrackingBridge?.dispose()
+        enhancedTrackingBridge = null
+        super.onDestroy()
     }
 
     companion object {

@@ -70,9 +70,9 @@ class _MainAppState extends State<MainApp> {
       try {
         switch (uri.pathSegments.firstOrNull) {
           case 'start':
-            await GeolocationService.tracker.start();
+            await GeolocationService.start();
           case 'stop':
-            await GeolocationService.tracker.stop();
+            await GeolocationService.stop();
         }
       } on PlatformException {
         // permission denied or startup error

@@ -7,6 +7,8 @@ This file tracks verification evidence for the resilient Android tracking fork.
 - Version: `10.2.0-beta.1+159`
 - Target: Android
 - Beta branch: `beta/10.2.0-beta.1`
+- GitHub tag: `v10.2.0-beta.1`
+- GitHub Pre-release: published in `minhtuancn/traccar-client`
 - Feature stacks: merged to `main` in both the client and SDK repositories
 
 ## SDK stack
@@ -28,36 +30,51 @@ The complete client stack is merged to `minhtuancn/traccar-client` `main`:
 - Enhanced SDK integration — client PR #2.
 - Queue telemetry and Android build-toolchain compatibility — client PR #3.
 
-## Beta build evidence
+## App repository CI
 
-A fresh beta artifact was built from the merged client `main` after the beta version bump.
+The client repository now owns its Android build and beta publishing workflows.
 
-GitHub Actions cross-repo build runner:
+### Build workflow
 
-- Repository: `minhtuancn/traccar-client-sdk`
-- Workflow: `Client Android Beta Build`
-- Run: `35208519120`
-- Result: **success**
+`.github/workflows/build.yml`
 
-Successful gates:
+Runs for `main`, `beta/**`, pull requests, and manual dispatch. Successful gates include:
 
-1. checkout client `main` with git submodules recursively;
+1. recursive submodule checkout;
 2. pinned SDK core verification;
 3. `flutter pub get`;
 4. `flutter analyze`;
-5. `flutter test` — 13 regression/integration tests passed;
+5. `flutter test`;
 6. `flutter build apk --debug`;
-7. rename and SHA-256 generation;
+7. APK rename + SHA-256 generation;
 8. artifact upload.
 
-Final beta files:
+Initial verified run after enabling the workflow:
 
-- APK: `traccar-client-10.2.0-beta.1.apk`
-- APK size: `185,818,790` bytes
-- APK SHA-256: `ac3b79a111e9b49ae99c6c104ec58821070f87ec565779a4ff4a9854d54581a6`
-- GitHub Actions artifact ZIP SHA-256: `7aa51cedff5d6520fcf726923294703903040868f78e95d0689ffcb05f448824`
+- Run: `35213462873`
+- Result: **success**
+- Source: `beta/10.2.0-beta.1`
 
-The CI-generated checksum file contains the same APK SHA-256 shown above.
+### Beta Release workflow
+
+`.github/workflows/beta-release.yml`
+
+Runs for `beta/**` and manual dispatch. It performs all SDK/app verification, builds the beta APK, generates its checksum, uploads the CI artifact, and creates or updates a GitHub Pre-release for the beta version.
+
+Initial verified run:
+
+- Run: `35213462878`
+- Result: **success**
+- Tag: `v10.2.0-beta.1`
+- Pre-release: `Traccar Client 10.2.0-beta.1`
+
+The release workflow generates run ID, source commit, APK size, and APK SHA-256 from the artifact built in that same run so release metadata cannot silently retain a checksum from an older build.
+
+## Production release isolation
+
+`.github/workflows/release.yml` remains the production Android/iOS publishing workflow. Its tag filter now explicitly excludes tags containing `-`, so beta/RC tags such as `v10.2.0-beta.1` do not trigger Google Play production or App Store publishing.
+
+Production checkout also initializes the SDK git submodule recursively.
 
 ## Signing status
 

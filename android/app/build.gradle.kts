@@ -22,7 +22,9 @@ if (keystorePropertiesFile.exists()) {
 }
 
 extensions.configure<ApplicationExtension> {
-    namespace = "org.traccar.client"
+    // AGP 9 requires every Android module/library to have a unique namespace.
+    // Keep the installed package/applicationId unchanged for upgrade compatibility.
+    namespace = "org.traccar.client.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

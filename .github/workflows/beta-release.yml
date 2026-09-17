@@ -75,17 +75,13 @@ jobs:
           APK_SHA=$(sha256sum "$APK" | awk '{print $1}')
           APK_SIZE=$(stat -c%s "$APK")
           cp docs/BETA_RELEASE.md release-notes.md
-          cat >> release-notes.md <<EOF
-
-          ## CI artifact for this release
-
-          - Workflow: `Beta Release`
-          - Run ID: `${GITHUB_RUN_ID}`
-          - Commit: `${GITHUB_SHA}`
-          - APK: `$APK`
-          - APK size: `$APK_SIZE` bytes
-          - APK SHA-256: `$APK_SHA`
-          EOF
+          printf '\n## CI artifact for this release\n\n' >> release-notes.md
+          printf -- '- Workflow: `Beta Release`\n' >> release-notes.md
+          printf -- '- Run ID: `%s`\n' "$GITHUB_RUN_ID" >> release-notes.md
+          printf -- '- Commit: `%s`\n' "$GITHUB_SHA" >> release-notes.md
+          printf -- '- APK: `%s`\n' "$APK" >> release-notes.md
+          printf -- '- APK size: `%s` bytes\n' "$APK_SIZE" >> release-notes.md
+          printf -- '- APK SHA-256: `%s`\n' "$APK_SHA" >> release-notes.md
 
       - name: Upload CI artifact
         uses: actions/upload-artifact@v4

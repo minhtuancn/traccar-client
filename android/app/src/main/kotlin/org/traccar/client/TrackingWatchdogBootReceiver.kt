@@ -9,8 +9,7 @@ class TrackingWatchdogBootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
-            Intent.ACTION_MY_PACKAGE_REPLACED,
-            -> TrackingWatchdogScheduler.schedule(context)
+            Intent.ACTION_MY_PACKAGE_REPLACED -> TrackingWatchdogScheduler.schedule(context)
         }
     }
 }

@@ -2,6 +2,8 @@
 
 This document describes how the `minhtuancn/traccar-client` fork consumes the enhanced `minhtuancn/traccar-client-sdk` fork and how the reliability features interact.
 
+**Current status:** the complete enhanced Android stack is merged to `main` and is being validated as Android beta `10.2.0-beta.1+159`.
+
 ## Scope
 
 The enhanced native integration in this app currently targets **Android**. The SDK fork also contains iOS implementations for Fresh Heartbeat, Adaptive Tracking Profiles and Smart Sync, but the client app does not yet consume a forked iOS XCFramework/SPM binary. Do not assume the Android source-substitution mechanism also changes the iOS app.
@@ -205,7 +207,7 @@ Verification commands:
 
 ```shell
 cd vendor/traccar-client-sdk
-./gradlew :core:check --no-configuration-cache
+./gradlew :core:allTests --no-configuration-cache
 cd ../..
 flutter pub get
 flutter analyze
@@ -213,13 +215,15 @@ flutter test
 flutter build apk --debug
 ```
 
-`.woodpecker.yml` runs the same sequence in self-hosted CI. GitHub pull-request CI is also configured for stacked feature branches so integration branches can be verified before they target `main`.
+`.woodpecker.yml` runs the same core/client verification path in self-hosted CI.
+
+The Android beta build toolchain currently uses Gradle 9.5.1, Android Gradle Plugin 9.2.0 and Kotlin 2.3.21. The installed application ID remains `org.traccar.client`, while the app build namespace is `org.traccar.client.app` to avoid a namespace collision with the SDK library under AGP 9.
 
 ## Updating the SDK pin
 
-Do not point the app at a moving SDK branch for production builds. Update the submodule to a reviewed SDK commit, commit the changed gitlink in this repository, and let CI validate the exact pair.
+Do not point the app at a moving SDK branch for beta/production builds. Update the submodule to a reviewed SDK commit, commit the changed gitlink in this repository, and let CI validate the exact pair.
 
-Current dependency order is:
+The enhancement dependency order is:
 
 ```text
 Fresh Heartbeat
@@ -229,15 +233,18 @@ Fresh Heartbeat
       -> client SDK pin update
 ```
 
+All four SDK phases and the corresponding client integration are now merged to their respective `main` branches.
+
 ## Verification gate
 
-A feature branch is not considered verified merely because it is mergeable. Before merging to the production branch, require evidence for:
+Automated integration verification has passed SDK core checks, `flutter analyze`, Flutter tests and Android debug APK compilation. Before promoting the beta to production, complete on-device smoke tests for:
 
-1. SDK core tests / checks.
-2. `flutter analyze`.
-3. `flutter test`.
-4. Android debug APK build.
-5. On-device smoke test for Start/Stop, reboot recovery, stationary heartbeat, adaptive transitions and queue recovery after a network outage.
-6. Status telemetry validation: queue depth rises while delivery is held/offline, falls after sync, and last-success time advances only after successful upload.
+1. Start/Stop from the main screen, deep-link and quick action.
+2. Reboot recovery and ordinary process/service recovery.
+3. Explicit Stop remaining stopped across watchdog ticks/reboot.
+4. Stationary heartbeat age/freshness behavior.
+5. Adaptive motion/power profile transitions on the target OEM.
+6. Offline/Batch queue recovery after a network outage.
+7. Status telemetry: queue depth rises while delivery is held/offline, falls after sync, and last-success time advances only after successful upload.
 
 The on-device checks are especially important because Android background execution and OEM battery-management behavior cannot be fully proven by unit tests alone.

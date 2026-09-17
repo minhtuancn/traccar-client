@@ -6,6 +6,7 @@
 - Release date: 2026-09-17
 - Target: Android
 - Application ID: `org.traccar.client`
+- Source branch: `beta/10.2.0-beta.1`
 - Status: merged feature stack on `main`; beta APK rebuilt from merged `main` before distribution
 
 ## Included resilient-tracking stack
@@ -26,14 +27,26 @@ The SDK fork keeps the original queue and Traccar/OsmAnd-compatible per-position
 
 ## Verification gates
 
-The integrated stack has already passed:
+The integrated stack has passed:
 
 - SDK Kotlin Multiplatform core verification.
 - Flutter analysis with zero issues.
 - 13 Flutter regression/integration tests.
 - Android debug APK compilation and artifact upload.
 
-A new beta artifact is built from merged `main` after the beta version bump so that the distributed APK exactly matches the documented beta source state.
+The beta artifact is rebuilt from merged `main` after the beta version bump so that the distributed APK matches the beta source state for executable code and configuration.
+
+## Beta signing and upgrades
+
+The automated beta artifact is currently a **debug-signed APK intended for sideload/device validation**. Android requires the same signing certificate for an in-place app update.
+
+Consequences:
+
+- It may not install as an update over the official Traccar Client or any APK signed with a different certificate, even though the application ID remains `org.traccar.client`.
+- A long-lived beta/update channel should use a dedicated private signing keystore stored outside this public repository and injected through a protected CI secret.
+- Do not commit a release/private signing key, platform key, or keystore password to this repository.
+
+For testing where a differently signed `org.traccar.client` is already installed, uninstall the old build first unless preserving app data is required. Establish a stable private beta signing key before relying on in-place beta-to-beta upgrades.
 
 ## Device smoke-test checklist
 

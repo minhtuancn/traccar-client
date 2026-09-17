@@ -26,4 +26,14 @@ plugins {
     id("org.jetbrains.kotlin.android") version "2.2.20" apply false
 }
 
+// Keep Flutter/Dart on the published plugin API while replacing only the
+// Android native core with the pinned fork in vendor/. This makes enhanced
+// Android behavior reproducible without publishing over Traccar's Maven
+// coordinates or relying on a mutable branch at build time.
+includeBuild("../vendor/traccar-client-sdk") {
+    dependencySubstitution {
+        substitute(module("org.traccar:traccar-client-sdk")).using(project(":core"))
+    }
+}
+
 include(":app")

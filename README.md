@@ -2,6 +2,14 @@
 
 This repository is a fork of the official [Traccar Client](https://www.traccar.org/client) app. It keeps Traccar server/protocol compatibility while adding reliability features for long-running Android tracking and managed-device deployments.
 
+## Current beta
+
+**Android beta:** `10.2.0-beta.1+159` (2026-09-17)
+
+The resilient-tracking feature stack has been merged to `main`. The beta includes managed-device watchdog/recovery, fresh-position heartbeat, adaptive tracking profiles, Smart Sync, and durable queue telemetry.
+
+See [`CHANGELOG.md`](CHANGELOG.md) for release changes and [`docs/BETA_RELEASE.md`](docs/BETA_RELEASE.md) for installation/validation guidance and platform boundaries.
+
 ## Fork enhancements
 
 - **Service Watchdog** — app-layer watchdog supplements the SDK foreground service, `START_STICKY`, and boot recovery. It only attempts recovery when tracking is still enabled.
@@ -43,6 +51,7 @@ Traccar / OsmAnd-compatible HTTP endpoint
 
 See:
 
+- [`docs/BETA_RELEASE.md`](docs/BETA_RELEASE.md) — current Android beta, verification and device smoke-test checklist.
 - [`docs/ENHANCED_TRACKING.md`](docs/ENHANCED_TRACKING.md) — fork architecture, settings, status telemetry, build and verification workflow.
 - [`docs/ANDROID_MANAGED_DEVICE.md`](docs/ANDROID_MANAGED_DEVICE.md) — managed-device / Device Owner deployment and Android recovery behavior.
 - [`docs/superpowers/plans/2026-09-17-resilient-tracking.md`](docs/superpowers/plans/2026-09-17-resilient-tracking.md) — implementation status, remaining device gates and history.
@@ -79,7 +88,7 @@ cd vendor/traccar-client-sdk
 ./gradlew :core:check --no-configuration-cache
 ```
 
-The repository also includes `.woodpecker.yml` so the same SDK tests, Flutter analysis/tests, and Android debug build can run on the self-hosted CI pipeline. GitHub pull-request CI is configured to run for stacked feature branches as well as pull requests to `main`.
+The repository also includes `.woodpecker.yml` so the same SDK tests, Flutter analysis/tests, and Android debug build can run on the self-hosted CI pipeline.
 
 ## Android behavior and privacy
 

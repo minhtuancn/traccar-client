@@ -1,0 +1,16 @@
+steps:
+  verify:
+    image: ghcr.io/cirruslabs/flutter:stable
+    commands:
+      - git submodule sync --recursive
+      - git submodule update --init --recursive
+      - cd vendor/traccar-client-sdk
+      - ./gradlew :core:check --no-configuration-cache
+      - cd ../..
+      - flutter pub get
+      - flutter analyze
+      - flutter test
+      - flutter build apk --debug
+
+when:
+  - event: [push, pull_request, manual]

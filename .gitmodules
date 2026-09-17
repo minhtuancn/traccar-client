@@ -1,0 +1,4 @@
+[submodule "vendor/traccar-client-sdk"]
+	path = vendor/traccar-client-sdk
+	url = https://github.com/minhtuancn/traccar-client-sdk.git
+	branch = feature/smart-offline-batch-sync

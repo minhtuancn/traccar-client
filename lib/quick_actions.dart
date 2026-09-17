@@ -24,9 +24,9 @@ class _QuickActionsInitializerState extends State<QuickActionsInitializer> {
       try {
         switch (shortcutType) {
           case 'start':
-            await GeolocationService.tracker.start();
+            await GeolocationService.start();
           case 'stop':
-            await GeolocationService.tracker.stop();
+            await GeolocationService.stop();
           case 'sos':
             await GeolocationService.tracker.requestPosition(alarm: 'sos');
         }
@@ -45,9 +45,21 @@ class _QuickActionsInitializerState extends State<QuickActionsInitializer> {
     super.didChangeDependencies();
     final localizations = AppLocalizations.of(context)!;
     quickActions.setShortcutItems(<ShortcutItem>[
-      ShortcutItem(type: 'start', localizedTitle: localizations.startAction, icon: 'play'),
-      ShortcutItem(type: 'stop', localizedTitle: localizations.stopAction, icon: 'stop'),
-      ShortcutItem(type: 'sos', localizedTitle: localizations.sosAction, icon: 'exclamation'),
+      ShortcutItem(
+        type: 'start',
+        localizedTitle: localizations.startAction,
+        icon: 'play',
+      ),
+      ShortcutItem(
+        type: 'stop',
+        localizedTitle: localizations.stopAction,
+        icon: 'stop',
+      ),
+      ShortcutItem(
+        type: 'sos',
+        localizedTitle: localizations.sosAction,
+        icon: 'exclamation',
+      ),
     ]);
   }
 

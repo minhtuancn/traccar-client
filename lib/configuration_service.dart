@@ -13,7 +13,10 @@ class ConfigurationService {
     await applyParameters(config, url: config[Preferences.url]?.toString());
   }
 
-  static Future<void> applyParameters(Map<String, dynamic> parameters, {String? url}) async {
+  static Future<void> applyParameters(
+    Map<String, dynamic> parameters, {
+    String? url,
+  }) async {
     if (url != null) {
       await Preferences.instance.setString(Preferences.url, url);
     }
@@ -27,19 +30,37 @@ class ConfigurationService {
     await _applyBoolParameter(parameters, Preferences.wakelock);
     await _applyBoolParameter(parameters, Preferences.stopDetection);
     await _applyBoolParameter(parameters, Preferences.preferPlatformProviders);
-    await GeolocationService.tracker.setConfig(Preferences.buildConfig());
+
+    await _applyBoolParameter(parameters, Preferences.adaptiveTracking);
+    await _applySyncMode(parameters);
+    await _applyIntParameter(parameters, Preferences.syncBatchSize);
+    await _applyIntParameter(parameters, Preferences.syncBatchInterval);
+    await _applyIntParameter(parameters, Preferences.heartbeatMaxAge);
+
+    await GeolocationService.setConfig(Preferences.buildConfig());
   }
 
   static Future<void> _applyStringParameter(
-      Map<String, dynamic> parameters, String key) async {
+    Map<String, dynamic> parameters,
+    String key,
+  ) async {
     final value = parameters[key];
     if (value != null) {
       await Preferences.instance.setString(key, value.toString());
     }
   }
 
+  static Future<void> _applySyncMode(Map<String, dynamic> parameters) async {
+    final value = parameters[Preferences.syncMode]?.toString().toLowerCase();
+    if (value == 'instant' || value == 'batch' || value == 'offline') {
+      await Preferences.instance.setString(Preferences.syncMode, value!);
+    }
+  }
+
   static Future<void> _applyIntParameter(
-      Map<String, dynamic> parameters, String key) async {
+    Map<String, dynamic> parameters,
+    String key,
+  ) async {
     final raw = parameters[key];
     final value = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
     if (value != null) {
@@ -48,12 +69,14 @@ class ConfigurationService {
   }
 
   static Future<void> _applyBoolParameter(
-      Map<String, dynamic> parameters, String key) async {
+    Map<String, dynamic> parameters,
+    String key,
+  ) async {
     final raw = parameters[key];
     if (raw is bool) {
       await Preferences.instance.setBool(key, raw);
     } else if (raw is String) {
-      switch (raw) {
+      switch (raw.toLowerCase()) {
         case 'false':
           await Preferences.instance.setBool(key, false);
         case 'true':

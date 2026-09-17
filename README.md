@@ -1,38 +1,99 @@
-# [Traccar Client app](https://www.traccar.org/client)
+# Traccar Client app — resilient tracking fork
 
-[![Get it on Google Play](https://www.tananaev.com/badges/google-play.svg)](https://play.google.com/store/apps/details?id=org.traccar.client) [![Download on the App Store](https://www.tananaev.com/badges/app-store.svg)](https://itunes.apple.com/app/traccar-client/id843156974)
+This repository is a fork of the official [Traccar Client](https://www.traccar.org/client) app. It keeps Traccar server/protocol compatibility while adding reliability features for long-running Android tracking and managed-device deployments.
 
-## Overview
+## Fork enhancements
 
-Traccar Client is a GPS tracking app for Android and iOS. It runs in the background and sends location updates to your own server running [Traccar](https://github.com/traccar/traccar), the open-source GPS tracking platform.
+- **Service Watchdog** — app-layer watchdog supplements the SDK foreground service, `START_STICKY`, and boot recovery. It only attempts recovery when tracking is still enabled.
+- **Fresh-position Heartbeat** — heartbeat attempts a fresh fix and refuses to present arbitrarily old cached coordinates as a new location.
+- **Adaptive Tracking Profiles** — automatic Driving, Walking, Stationary, Charging, and Battery Saver profiles adjust the effective GPS configuration at runtime.
+- **Smart Sync** — Instant, Batch, and Offline delivery modes reuse the existing SQLDelight durable queue. `Sync now` can explicitly drain queued positions.
+- **Managed Android deployment** — Device Admin/Device Owner support, boot/update recovery, and optional exclusion from Recent Apps.
+- **Status visibility** — the Status screen shows the current adaptive profile, sync mode, and diagnostic logs.
 
-- **Real-time Tracking**: See your device’s location on your private server in real time.
-- **Open-Source**: 100% free and open-source, with no ads or tracking.
-- **Customizable**: Configure update intervals, accuracy, and data usage to fit your needs.
-- **Privacy First**: Your location data is sent only to your chosen server—never to third parties.
-- **Easy Integration**: Designed to work seamlessly with the Traccar server and many third-party GPS tracking platforms.
+The Android app consumes the enhanced native SDK from the pinned `vendor/traccar-client-sdk` git submodule. Gradle dependency substitution replaces the official native Maven dependency with that pinned source build. This keeps builds reproducible without publishing over Traccar's official Maven coordinates.
 
-Just enter your server address, grant location permissions, and the app will automatically send periodic location reports in the background.
+> The enhanced source substitution in this app is currently Android-specific. The SDK fork contains iOS implementations, but this client still needs a dedicated forked XCFramework/SPM release strategy before the iOS app can consume those enhanced native changes.
 
-Don't have a Traccar server yet? [Try the live demo](https://www.traccar.org/demo-server/) or see the [installation guides](https://www.traccar.org/install-vps/) to set up your own for free.
+## Architecture
 
-| Client App |
-|---|
-| <img src=".github/screenshot.png" alt="Traccar Client app" width="200"> |
+```text
+Flutter UI / Managed Config
+          |
+          v
+GeolocationService + EnhancedTrackingService
+          |
+          +---- Service Watchdog
+          |
+          v
+Pinned minhtuancn/traccar-client-sdk
+          |
+          +---- Fresh Heartbeat
+          +---- Adaptive Tracking Profiles
+          +---- Smart Sync
+          |
+          v
+SQLDelight Durable Queue
+          |
+          v
+Traccar / OsmAnd-compatible HTTP endpoint
+```
+
+See:
+
+- [`docs/ENHANCED_TRACKING.md`](docs/ENHANCED_TRACKING.md) — fork architecture, settings, build and verification workflow.
+- [`docs/ANDROID_MANAGED_DEVICE.md`](docs/ANDROID_MANAGED_DEVICE.md) — managed-device / Device Owner deployment and Android recovery behavior.
+- [`docs/superpowers/plans/2026-09-17-resilient-tracking.md`](docs/superpowers/plans/2026-09-17-resilient-tracking.md) — implementation plan/history.
 
 ## Build
 
-Standard Flutter project:
+Clone with the pinned SDK submodule:
+
+```shell
+git clone --recurse-submodules https://github.com/minhtuancn/traccar-client.git
+cd traccar-client
+```
+
+If the repository was cloned without submodules:
+
+```shell
+git submodule sync --recursive
+git submodule update --init --recursive
+```
+
+Then build normally:
 
 ```shell
 flutter pub get
-flutter run
+flutter analyze
+flutter test
+flutter build apk --debug
 ```
 
-## Team
+To verify the pinned SDK core as well:
 
-- Anton Tananaev ([anton@traccar.org](mailto:anton@traccar.org))
+```shell
+cd vendor/traccar-client-sdk
+./gradlew :core:check --no-configuration-cache
+```
+
+The repository also includes `.woodpecker.yml` so the same SDK tests, Flutter analysis/tests, and Android debug build can run on the self-hosted CI pipeline.
+
+## Android behavior and privacy
+
+Continuous Android location tracking uses a foreground location service and therefore keeps Android's required user-visible foreground-service notification/indicators. This fork does not attempt to hide tracking from Android security/process management surfaces. `excludeFromRecents` only removes the Activity from the Recent Apps UI.
+
+A user or device administrator explicitly stopping/force-stopping the app can still affect background execution according to Android platform rules. Device Owner management and the watchdog improve recovery but do not bypass Android's security model.
+
+## Upstream overview
+
+Traccar Client is a GPS tracking app for Android and iOS. It runs in the background and sends location updates to a user-selected Traccar-compatible server.
+
+- **Real-time Tracking** — send the device's location to a private server.
+- **Open Source** — based on the Apache-2.0 Traccar Client codebase.
+- **Customizable** — configurable update intervals, accuracy, heartbeat and data usage.
+- **Privacy** — location data is sent to the configured server.
 
 ## License
 
-Apache License, Version 2.0. See [LICENSE.txt](https://github.com/traccar/traccar-client/blob/master/LICENSE.txt) for details.
+Apache License, Version 2.0. See [LICENSE.txt](LICENSE.txt). Third-party projects such as Colota are used only as architectural/behavior references; their source code is not copied into this fork.

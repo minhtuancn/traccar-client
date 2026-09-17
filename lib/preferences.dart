@@ -22,6 +22,15 @@ class Preferences {
   static const String preferPlatformProviders = 'prefer_platform_providers';
   static const String password = 'password';
 
+  // Fork-only reliability settings. These are intentionally stored outside
+  // the published traccar_client_sdk 1.0.11 Dart Config and applied through
+  // the Android native bridge after every base init/setConfig call.
+  static const String adaptiveTracking = 'adaptive_tracking';
+  static const String syncMode = 'sync_mode';
+  static const String syncBatchSize = 'sync_batch_size';
+  static const String syncBatchInterval = 'sync_batch_interval';
+  static const String heartbeatMaxAge = 'heartbeat_max_age';
+
   static Future<void> init() async {
     _initFuture ??= _createInstance();
     await _initFuture;
@@ -30,29 +39,78 @@ class Preferences {
   static Future<void> _createInstance() async {
     instance = await SharedPreferencesWithCache.create(
       sharedPreferencesOptions: Platform.isAndroid
-          ? SharedPreferencesAsyncAndroidOptions(backend: SharedPreferencesAndroidBackendLibrary.SharedPreferences)
+          ? SharedPreferencesAsyncAndroidOptions(
+              backend: SharedPreferencesAndroidBackendLibrary.SharedPreferences,
+            )
           : SharedPreferencesOptions(),
       cacheOptions: SharedPreferencesWithCacheOptions(
         allowList: {
-          id, url, accuracy, distance, interval, angle, heartbeat, buffer, wakelock, stopDetection, preferPlatformProviders, password,
+          id,
+          url,
+          accuracy,
+          distance,
+          interval,
+          angle,
+          heartbeat,
+          buffer,
+          wakelock,
+          stopDetection,
+          preferPlatformProviders,
+          password,
+          adaptiveTracking,
+          syncMode,
+          syncBatchSize,
+          syncBatchInterval,
+          heartbeatMaxAge,
         },
       ),
     );
     if (Platform.isAndroid) {
-      for (final key in {interval, distance, angle, heartbeat}) {
+      for (final key in {
+        interval,
+        distance,
+        angle,
+        heartbeat,
+        syncBatchSize,
+        syncBatchInterval,
+        heartbeatMaxAge,
+      }) {
         if (instance.get(key) is String) {
-          await instance.setInt(key, int.tryParse(instance.getString(key) ?? '') ?? 0);
+          await instance.setInt(
+            key,
+            int.tryParse(instance.getString(key) ?? '') ?? 0,
+          );
         }
       }
     }
     if (instance.getString(id) == null) {
-      await instance.setString(id, (Random().nextInt(90000000) + 10000000).toString());
+      await instance.setString(
+        id,
+        (Random().nextInt(90000000) + 10000000).toString(),
+      );
       await instance.setString(url, 'http://demo.traccar.org:5055');
       await instance.setString(accuracy, 'medium');
       await instance.setInt(interval, 300);
       await instance.setInt(distance, 75);
       await instance.setBool(buffer, true);
       await instance.setBool(stopDetection, true);
+    }
+
+    // Enhanced defaults are also applied to upgrades from the upstream app.
+    if (instance.getBool(adaptiveTracking) == null) {
+      await instance.setBool(adaptiveTracking, true);
+    }
+    if (instance.getString(syncMode) == null) {
+      await instance.setString(syncMode, 'instant');
+    }
+    if (instance.getInt(syncBatchSize) == null) {
+      await instance.setInt(syncBatchSize, 25);
+    }
+    if (instance.getInt(syncBatchInterval) == null) {
+      await instance.setInt(syncBatchInterval, 60);
+    }
+    if (instance.getInt(heartbeatMaxAge) == null) {
+      await instance.setInt(heartbeatMaxAge, 300);
     }
   }
 
@@ -75,7 +133,8 @@ class Preferences {
       ),
       wakeLock: instance.getBool(wakelock) ?? false,
       buffer: instance.getBool(buffer) ?? true,
-      preferPlatformProviders: instance.getBool(preferPlatformProviders) ?? false,
+      preferPlatformProviders:
+          instance.getBool(preferPlatformProviders) ?? false,
     );
   }
 }

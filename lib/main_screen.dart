@@ -11,6 +11,7 @@ import 'geolocation_service.dart';
 import 'l10n/app_localizations.dart';
 import 'settings_screen.dart';
 import 'status_screen.dart';
+import 'tracking_watchdog.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -87,6 +88,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     var started = false;
                     try {
                       await GeolocationService.tracker.start();
+                      await TrackingWatchdog.arm();
                       started = true;
                     } on PlatformException {
                       // permission denied or startup error
@@ -104,6 +106,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   } else {
                     FirebaseCrashlytics.instance.log('tracking_toggle_stop');
                     await GeolocationService.tracker.stop();
+                    await TrackingWatchdog.cancel();
                     if (mounted) setState(() => trackingEnabled = false);
                   }
                 }

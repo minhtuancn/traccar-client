@@ -11,7 +11,6 @@ import 'geolocation_service.dart';
 import 'l10n/app_localizations.dart';
 import 'settings_screen.dart';
 import 'status_screen.dart';
-import 'tracking_watchdog.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -87,21 +86,10 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     FirebaseCrashlytics.instance.log('tracking_toggle_start');
                     var started = false;
                     try {
-                      await GeolocationService.tracker.start();
+                      await GeolocationService.start();
                       started = true;
                     } on PlatformException {
                       // permission denied or startup error
-                    }
-                    if (started) {
-                      try {
-                        await TrackingWatchdog.arm();
-                      } on PlatformException catch (error, stackTrace) {
-                        FirebaseCrashlytics.instance.recordError(
-                          error,
-                          stackTrace,
-                          reason: 'watchdog_arm_failed',
-                        );
-                      }
                     }
                     if (!mounted) return;
                     if (!started) {
@@ -115,16 +103,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     setState(() => trackingEnabled = started);
                   } else {
                     FirebaseCrashlytics.instance.log('tracking_toggle_stop');
-                    await GeolocationService.tracker.stop();
-                    try {
-                      await TrackingWatchdog.cancel();
-                    } on PlatformException catch (error, stackTrace) {
-                      FirebaseCrashlytics.instance.recordError(
-                        error,
-                        stackTrace,
-                        reason: 'watchdog_cancel_failed',
-                      );
-                    }
+                    await GeolocationService.stop();
                     if (mounted) setState(() => trackingEnabled = false);
                   }
                 }

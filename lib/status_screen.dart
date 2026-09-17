@@ -74,6 +74,12 @@ class _StatusScreenState extends State<StatusScreen> {
     setState(() => _logs = const []);
   }
 
+  String _formatLastSuccessfulSync(EnhancedTrackingStatus status) {
+    final timestamp = status.lastSuccessfulSyncMillis;
+    if (timestamp == null) return 'Never';
+    return _fullFormat.format(DateTime.fromMillisecondsSinceEpoch(timestamp));
+  }
+
   Widget _buildEnhancedStatus() {
     final status = _enhancedStatus;
     if (status == null) return const SizedBox.shrink();
@@ -99,6 +105,18 @@ class _StatusScreenState extends State<StatusScreen> {
                     : 'Adaptive profiles disabled',
               ),
               trailing: Text(status.syncMode.toUpperCase()),
+            ),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.pending_actions),
+              title: const Text('Queued positions'),
+              trailing: Text(status.pendingPositionCount.toString()),
+            ),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.cloud_done),
+              title: const Text('Last successful sync'),
+              subtitle: Text(_formatLastSuccessfulSync(status)),
             ),
           ],
         ),

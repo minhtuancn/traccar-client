@@ -11,7 +11,8 @@ void main() {
     expect(native, contains('"configure"'));
     expect(native, contains('"getStatus"'));
     expect(native, contains('"syncNow"'));
-    expect(native, contains('AdaptiveTrackingConfig'));
+    expect(native, contains('adaptiveTracking = current.adaptiveTracking.copy('));
+    expect(native, contains('enabled = adaptiveEnabled'));
     expect(native, contains('SmartSyncConfig'));
     expect(native, contains('heartbeatMaxAgeSeconds'));
   });

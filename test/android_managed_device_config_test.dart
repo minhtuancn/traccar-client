@@ -9,6 +9,7 @@ void main() {
     ).readAsStringSync();
 
     expect(manifest, contains('android:excludeFromRecents="true"'));
+    expect(manifest, contains('android:name="org.traccar.client.MainActivity"'));
   });
 
   test('Android device admin receiver is registered', () {
@@ -16,7 +17,10 @@ void main() {
       'android/app/src/main/AndroidManifest.xml',
     ).readAsStringSync();
 
-    expect(manifest, contains('android:name=".ManagedDeviceAdminReceiver"'));
+    expect(
+      manifest,
+      contains('android:name="org.traccar.client.ManagedDeviceAdminReceiver"'),
+    );
     expect(manifest, contains('android.permission.BIND_DEVICE_ADMIN'));
     expect(manifest, contains('android.app.device_admin'));
     expect(manifest, contains('android.app.action.DEVICE_ADMIN_ENABLED'));
@@ -45,13 +49,23 @@ void main() {
       'android/app/src/main/AndroidManifest.xml',
     ).readAsStringSync();
 
-    expect(manifest, contains('android:name=".TrackingWatchdogReceiver"'));
     expect(
       manifest,
-      contains('android:name=".TrackingWatchdogBootReceiver"'),
+      contains('android:name="org.traccar.client.TrackingWatchdogReceiver"'),
+    );
+    expect(
+      manifest,
+      contains('android:name="org.traccar.client.TrackingWatchdogBootReceiver"'),
     );
     expect(manifest, contains('android.intent.action.BOOT_COMPLETED'));
     expect(manifest, contains('android.intent.action.MY_PACKAGE_REPLACED'));
+  });
+
+  test('app namespace is unique while installed package stays compatible', () {
+    final gradle = File('android/app/build.gradle.kts').readAsStringSync();
+
+    expect(gradle, contains('namespace = "org.traccar.client.app"'));
+    expect(gradle, contains('applicationId = "org.traccar.client"'));
   });
 
   test('watchdog uses persisted tracking intent and allow-while-idle alarm', () {
@@ -74,8 +88,9 @@ void main() {
     expect(receiverSource, contains('TrackingWatchdogScheduler.schedule'));
   });
 
-  test('Flutter start and stop paths arm and cancel the watchdog', () {
+  test('central tracking lifecycle arms and cancels the watchdog', () {
     final wrapper = File('lib/tracking_watchdog.dart');
+    final service = File('lib/geolocation_service.dart').readAsStringSync();
     final screen = File('lib/main_screen.dart').readAsStringSync();
 
     expect(wrapper.existsSync(), isTrue);
@@ -83,7 +98,15 @@ void main() {
     expect(wrapperSource, contains("MethodChannel('traccar_client/watchdog')"));
     expect(wrapperSource, contains("invokeMethod<void>('arm')"));
     expect(wrapperSource, contains("invokeMethod<void>('cancel')"));
-    expect(screen, contains('TrackingWatchdog.arm()'));
-    expect(screen, contains('TrackingWatchdog.cancel()'));
+
+    expect(service, contains('await tracker.start();'));
+    expect(service, contains('await TrackingWatchdog.arm();'));
+    expect(service, contains('await tracker.stop();'));
+    expect(service, contains('await TrackingWatchdog.cancel();'));
+
+    expect(screen, contains('await GeolocationService.start();'));
+    expect(screen, contains('await GeolocationService.stop();'));
+    expect(screen, isNot(contains('TrackingWatchdog.arm()')));
+    expect(screen, isNot(contains('TrackingWatchdog.cancel()')));
   });
 }

@@ -84,17 +84,21 @@ class EnhancedTrackingBridge(messenger: BinaryMessenger) {
         }
     }
 
-    private suspend fun getStatus(): Map<String, Any> {
+    private suspend fun getStatus(): Map<String, Any?> {
         val tracker = sharedTracker()
             ?: return mapOf(
                 "profile" to "default",
                 "syncMode" to "instant",
                 "adaptiveEnabled" to false,
+                "pendingPositionCount" to 0L,
+                "lastSuccessfulSyncMillis" to null,
             )
         return mapOf(
             "profile" to tracker.profile.value.name.lowercase(),
             "syncMode" to tracker.config.smartSync.mode.name.lowercase(),
             "adaptiveEnabled" to tracker.config.adaptiveTracking.enabled,
+            "pendingPositionCount" to tracker.pendingPositionCount(),
+            "lastSuccessfulSyncMillis" to tracker.state.value.lastSuccessfulSyncMillis,
         )
     }
 

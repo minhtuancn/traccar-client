@@ -9,11 +9,15 @@ class EnhancedTrackingStatus {
     required this.profile,
     required this.syncMode,
     required this.adaptiveEnabled,
+    required this.pendingPositionCount,
+    required this.lastSuccessfulSyncMillis,
   });
 
   final String profile;
   final String syncMode;
   final bool adaptiveEnabled;
+  final int pendingPositionCount;
+  final int? lastSuccessfulSyncMillis;
 }
 
 class EnhancedTrackingService {
@@ -41,10 +45,18 @@ class EnhancedTrackingService {
     final raw = await _channel
         .invokeMapMethod<String, Object?>('getStatus');
     if (raw == null) return null;
+    final lastSuccessfulSync =
+        (raw['lastSuccessfulSyncMillis'] as num?)?.toInt();
     return EnhancedTrackingStatus(
       profile: raw['profile'] as String? ?? 'default',
       syncMode: raw['syncMode'] as String? ?? 'instant',
       adaptiveEnabled: raw['adaptiveEnabled'] as bool? ?? false,
+      pendingPositionCount:
+          (raw['pendingPositionCount'] as num?)?.toInt() ?? 0,
+      lastSuccessfulSyncMillis:
+          lastSuccessfulSync != null && lastSuccessfulSync > 0
+              ? lastSuccessfulSync
+              : null,
     );
   }
 

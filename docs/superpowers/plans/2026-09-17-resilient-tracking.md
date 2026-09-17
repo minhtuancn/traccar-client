@@ -1,172 +1,215 @@
-# Resilient Android Tracking Implementation Plan
+# Resilient Android Tracking — Execution Status
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+**Goal:** Make the Android Traccar Client fork survive ordinary service/process death, produce trustworthy stationary heartbeats, adapt tracking cadence to device state, retain positions through network loss, and expose enough telemetry to diagnose delivery health without breaking Traccar protocol compatibility.
 
-**Goal:** Make the Android Traccar Client fork survive service/process death, produce trustworthy stationary heartbeats, adapt tracking cadence to motion state, and sync a durable offline queue intelligently without breaking Traccar protocol compatibility.
+**Architecture:** Flutter remains the UI/configuration layer. Location capture, heartbeat policy, adaptive profiles, durable queueing and Smart Sync live in the forked Traccar Client SDK. Android service recovery is supplemented by an app-layer watchdog until a stable SDK-level watchdog API is proven equivalent. The Android app consumes an immutable SDK gitlink through Gradle composite-build dependency substitution.
 
-**Architecture:** Keep Flutter as the UI/configuration layer. Keep durable location capture, heartbeats, queueing and upload behavior in the Traccar Client SDK/native Android layer so behavior survives Flutter process death. Until `minhtuancn/traccar-client-sdk` exists, ship the watchdog as an Android app-layer extension that uses the SDK's public `sharedTracker()` / `TrackerService` APIs; migrate it into the SDK fork later without changing Flutter behavior.
+**Repositories:**
 
-**Tech Stack:** Flutter/Dart, Android Kotlin, AlarmManager, Traccar Client SDK 1.0.11+, Kotlin coroutines, SQLDelight durable queue.
+- App: `minhtuancn/traccar-client`
+- SDK: `minhtuancn/traccar-client-sdk`
 
-**Spec:** `docs/ANDROID_MANAGED_DEVICE.md` plus the architecture decisions in this plan.
+## Global constraints
 
-## Global Constraints
-
-- Android is the first target; iOS behavior must not regress.
-- Do not copy AGPL-3.0 Colota source code. Reimplement behavior clean-room from documented architecture/behavior only.
-- Do not hide the process or foreground service from Android system-management surfaces.
-- Never restart tracking after an explicit user Stop; persisted tracker intent/state is authoritative.
-- Reuse the SDK SQLDelight queue; do not create a second location queue in the Flutter app.
-- Preserve Traccar OsmAnd endpoint compatibility; initial batching means controlled queue draining, not an incompatible JSON-array protocol.
-- Watchdog must use an inexact allow-while-idle alarm and re-arm itself; no exact-alarm permission is required.
-- Background recovery must tolerate Android 12+ foreground-service start restrictions and notification permission differences.
+- Android is the first production target; iOS behavior must not regress.
+- Do not copy AGPL-3.0 Colota source. Architecture/behavior may be studied and reimplemented clean-room only.
+- Do not hide the process or foreground location service from Android system/security surfaces.
+- Never restart tracking after an explicit user Stop; persisted tracker intent is authoritative.
+- Reuse the SDK SQLDelight queue; do not add a second Flutter queue.
+- Preserve Traccar/OsmAnd request compatibility; Batch means bounded draining of ordinary requests, not a new JSON batch wire format.
+- Android Force Stop remains a platform boundary and is not bypassed.
 
 ---
 
-## File Structure
+## Task 1 — Android Service Watchdog
 
-### App repository (`minhtuancn/traccar-client`)
+**Status:** implementation complete; physical-device recovery gate pending.
 
-- `android/app/src/main/kotlin/org/traccar/client/TrackingWatchdogScheduler.kt`: owns watchdog alarm schedule/cancel only.
-- `android/app/src/main/kotlin/org/traccar/client/TrackingWatchdogReceiver.kt`: checks persisted tracking intent/state and repairs a dead tracker service when allowed.
-- `android/app/src/main/kotlin/org/traccar/client/TrackingWatchdogBootReceiver.kt`: re-arms the watchdog after reboot/app replacement.
-- `android/app/src/main/kotlin/org/traccar/client/MainActivity.kt`: exposes a small MethodChannel for arm/cancel operations after explicit Start/Stop.
-- `lib/tracking_watchdog.dart`: Dart wrapper around the Android MethodChannel; no-op on non-Android platforms.
-- `lib/main_screen.dart`: arms watchdog after successful Start and cancels after Stop.
-- `android/app/src/main/AndroidManifest.xml`: registers watchdog receivers.
-- `test/android_managed_device_config_test.dart`: regression coverage for manifest and native extension files.
+Implemented in the app layer:
 
-### Future SDK fork (`minhtuancn/traccar-client-sdk`)
+- `TrackingWatchdogScheduler.kt`
+- `TrackingWatchdogReceiver.kt`
+- `TrackingWatchdogBootReceiver.kt`
+- watchdog manifest registrations
+- Flutter `traccar_client/watchdog` bridge
+- Start arms watchdog; explicit Stop cancels watchdog
+- watchdog checks persisted `tracker.state.value.enabled`
+- reboot/package replacement re-arms recovery
+- 15-minute inexact `ELAPSED_REALTIME_WAKEUP` + `setAndAllowWhileIdle`
 
-- `core/src/commonMain/kotlin/org/traccar/client/HeartbeatPolicy.kt`: fresh-fix policy and maximum acceptable cached-fix age.
-- `core/src/commonMain/kotlin/org/traccar/client/TrackingProfile.kt`: profile model and precedence.
-- `core/src/commonMain/kotlin/org/traccar/client/TrackingProfileEngine.kt`: pure profile selection with hysteresis/debounce.
-- `core/src/androidMain/kotlin/org/traccar/client/AndroidTrackingSignals.kt`: Android motion/charging inputs.
-- `core/src/commonMain/kotlin/org/traccar/client/SyncPolicy.kt`: instant/periodic/offline queue-drain policy.
-- `core/src/commonMain/kotlin/org/traccar/client/TrackerEngine.kt`: consumes heartbeat/profile/sync policies while retaining the existing SQLDelight queue.
-- Flutter bridge files expose configuration/status only; they do not own runtime tracking logic.
+Checklist:
 
----
-
-### Task 1: Android Service Watchdog
-
-**Files:**
-- Create: `android/app/src/main/kotlin/org/traccar/client/TrackingWatchdogScheduler.kt`
-- Create: `android/app/src/main/kotlin/org/traccar/client/TrackingWatchdogReceiver.kt`
-- Create: `android/app/src/main/kotlin/org/traccar/client/TrackingWatchdogBootReceiver.kt`
-- Modify: `android/app/src/main/AndroidManifest.xml`
-- Modify: `android/app/src/main/kotlin/org/traccar/client/MainActivity.kt`
-- Create: `lib/tracking_watchdog.dart`
-- Modify: `lib/main_screen.dart`
-- Test: `test/android_managed_device_config_test.dart`
-
-**Interfaces:**
-- Produces native MethodChannel `traccar_client/watchdog` methods `arm` and `cancel`.
-- Watchdog interval: 15 minutes; first arm after explicit Start may use the same interval.
-- Receiver calls `sharedTracker()`, returns without re-arming when tracker is absent or `state.value.enabled == false`, and otherwise ensures `TrackerService` is started before re-arming.
-
-- [ ] **Step 1: Write failing regression tests**
-  Assert manifest contains both watchdog receivers, scheduler uses `setAndAllowWhileIdle`, receiver reads `tracker.state.value.enabled`, and Dart Start/Stop paths invoke the watchdog wrapper.
-
-- [ ] **Step 2: Run tests and confirm RED**
-  Run `flutter test test/android_managed_device_config_test.dart` and expect failures for missing watchdog files/registrations.
-
-- [ ] **Step 3: Implement scheduler, receiver, boot re-arm and MethodChannel**
-  Use `AlarmManager.ELAPSED_REALTIME_WAKEUP`, `SystemClock.elapsedRealtime() + 15min`, immutable/update-current `PendingIntent`, and `setAndAllowWhileIdle` on API 23+.
-
-- [ ] **Step 4: Add explicit Start/Stop hooks**
-  On successful `tracker.start()`, call `TrackingWatchdog.arm()`. After `tracker.stop()`, call `TrackingWatchdog.cancel()`.
-
-- [ ] **Step 5: Verify**
-  Run `flutter test`, `flutter analyze`, and `flutter build apk --debug`.
-
-- [ ] **Step 6: Device tests**
-  Start tracking, force-stop only the service/process where possible without issuing Android Settings Force Stop, wait for/watchdog trigger, verify service returns. Reboot and verify boot recovery + watchdog re-arm. Explicit Stop must remain stopped after 20+ minutes.
+- [x] Regression coverage for watchdog/Device Admin wiring added.
+- [x] Scheduler/receiver/boot recovery implemented.
+- [x] Main switch, Quick Actions and action deep-links route through common `GeolocationService.start/stop` lifecycle.
+- [x] Explicit Stop is represented by persisted SDK state and watchdog never intentionally resurrects disabled tracking.
+- [x] Android Force Stop boundary documented.
+- [ ] Verify ordinary process/service death recovery on a physical Android device.
+- [ ] Reboot device and verify tracking/watchdog recovery without opening Flutter UI.
+- [ ] Leave explicitly stopped for at least one watchdog interval and confirm it remains stopped.
 
 ---
 
-### Task 2: Fresh-Position Heartbeat Policy (SDK fork)
+## Task 2 — Fresh-Position Heartbeat
 
-**Interfaces:**
-- Add `heartbeatFreshFix: Boolean = true`.
-- Add `heartbeatMaxAgeSeconds: Int = 120`.
-- Keep `heartbeatIntervalSeconds` as cadence.
-- Heartbeat attempts a fresh fix for up to the existing 30-second location fetch timeout; a last-known fallback is accepted only when its age is within policy. Otherwise emit a metadata/time-only heartbeat only if the server/protocol path supports it safely.
+**Status:** SDK implementation and automated CI complete; device validation pending.
 
-- [ ] Write pure policy tests covering fresh, cached-within-age, stale and no-fix cases.
-- [ ] Implement `HeartbeatPolicy` and integrate into `TrackerEngine.applyHeartbeatTick()`.
-- [ ] Preserve the existing queue pipeline and location processors.
-- [ ] Bridge the new config values through Flutter.
-- [ ] Add client settings with conservative defaults.
-- [ ] Run SDK unit tests plus Flutter client tests/build.
+Implemented in SDK PR #1 and carried by the pinned SDK stack:
 
----
+- `LocationConfig.heartbeatMaxAgeSeconds`
+- fresh `fetchOnce()` attempt remains first choice
+- cached location is accepted only inside configured age policy
+- stale/no-fix heartbeat becomes liveness-only position
+- Android/iOS Flutter and React Native wrapper compatibility retained
+- common regression tests for fresh/stale/no-fix/disabled filtering
 
-### Task 3: Adaptive Tracking Profiles (SDK fork)
+Checklist:
 
-**Interfaces:**
-- Profiles: `DRIVING`, `WALKING`, `STATIONARY`, `CHARGING`, `BATTERY_SAVER`, plus base/default.
-- Profile output is an effective `LocationConfig` plus `SyncPolicy`; user base config remains immutable.
-- Selection uses priority + activation/deactivation debounce to prevent flapping.
-
-Initial presets:
-
-| Profile | Location interval | Distance | Heartbeat | Queue drain |
-| --- | ---: | ---: | ---: | --- |
-| Driving | 10 s | 10 m | disabled while moving | instant |
-| Walking | 30 s | 15 m | disabled while moving | instant/30 s |
-| Stationary | paused/low-power | n/a | 15 min fresh-fix | instant |
-| Charging | 10 s | 5 m | normal | instant |
-| Battery saver | 180 s | 75 m | 30 min | 300 s |
-
-- [ ] Write pure profile-selection tests first: precedence, debounce, transition hysteresis and low-battery override.
-- [ ] Implement platform-neutral `TrackingProfileEngine`.
-- [ ] Feed Android motion/activity and charging/battery signals into the engine.
-- [ ] Apply effective config without resetting persisted user intent or losing queued positions.
-- [ ] Expose active profile/status to Flutter UI.
-- [ ] Verify profile transitions with fake signals and Android device tests.
+- [x] Policy tests added.
+- [x] Heartbeat age policy integrated into `TrackerEngine`.
+- [x] Existing queue/uploader pipeline preserved.
+- [x] Client exposes conservative heartbeat max-age setting (default 300 s).
+- [x] SDK GitHub CI passed for the heartbeat head.
+- [ ] Physical stationary-device test: verify old cached coordinates are not represented as fresh fixes.
 
 ---
 
-### Task 4: Smart Offline / Batch Sync (SDK fork)
+## Task 3 — Adaptive Tracking Profiles
 
-**Interfaces:**
-- `SyncMode`: `INSTANT`, `PERIODIC`, `OFFLINE`.
-- `syncIntervalSeconds` controls periodic drain cadence.
-- `drainLimit` bounds positions per pass to avoid radio/server bursts.
-- Network policy initially supports `ANY` and `UNMETERED`; Android-specific VPN/SSID constraints can follow without changing queue format.
-- Existing SQLDelight `PositionQueue` remains the single durable source of pending uploads.
+**Status:** SDK implementation and automated CI complete; real motion/OEM validation pending.
 
-- [ ] Write queue-drain tests for offline accumulation, network restore, bounded periodic draining, retry backoff and order preservation.
-- [ ] Refactor `TrackerEngine.syncLoop()` behind a `SyncPolicy` without changing current default behavior.
-- [ ] Add periodic/offline modes and bounded drain passes.
-- [ ] Preserve exponential backoff and FIFO semantics.
-- [ ] Expose queue count, last successful sync and current sync mode through SDK Flutter bridge.
-- [ ] Add status UI and manual `Sync now` action when policy permits.
-- [ ] Run long offline/reconnect device test and verify no positions are lost or duplicated.
+Profiles implemented:
 
----
+- `DRIVING`
+- `WALKING`
+- `STATIONARY`
+- `CHARGING`
+- `BATTERY_SAVER`
+- default/base profile
 
-### Task 5: SDK Fork Integration
+Behavior includes speed hysteresis, debounced motion transitions, immediate power/stationary policy changes and effective-location-config subscription restarts only when necessary.
 
-- [ ] Fork `traccar/traccar-client-sdk` to `minhtuancn/traccar-client-sdk`.
-- [ ] Implement Tasks 2-4 on feature branches/PRs in that fork.
-- [ ] Publish a forked package or pin the client to an immutable Git commit/tag.
-- [ ] Move the app-layer watchdog into the SDK once a stable SDK watchdog API exists; keep the Flutter `TrackingWatchdog` wrapper temporarily as a compatibility adapter.
-- [ ] Remove duplicate watchdog code only after migration tests prove equivalent recovery behavior.
-- [ ] Document upstream sync/rebase procedure so future official SDK fixes can be pulled without overwriting custom extensions.
+Checklist:
+
+- [x] Pure policy tests for precedence/hysteresis/profile selection.
+- [x] Platform-neutral profile policy/controller implemented.
+- [x] Android motion/activity + battery/charging inputs integrated.
+- [x] iOS implementation retained in SDK fork.
+- [x] Active profile exposed to Android Flutter client Status UI.
+- [x] SDK GitHub CI passed for the adaptive-profile head.
+- [ ] Physical walking/driving/stationary transition test with noisy GPS/activity signals.
+- [ ] Verify charging and low-battery profile priority on a real device.
 
 ---
 
-## Verification Gate
+## Task 4 — Smart Offline / Batch Sync
 
-Before declaring the resilient-tracking work complete, all of the following must be true:
+**Status:** queue policy and automated CI complete; long offline/reconnect validation pending.
 
-- Explicit Stop remains stopped across watchdog ticks and reboot.
-- OS/process death recovery does not require opening Flutter UI.
-- Stationary device emits a heartbeat using a fresh or age-bounded location according to policy.
-- Driving/walking/stationary transitions do not flap under noisy GPS/activity signals.
-- Offline positions survive process death/reboot and later upload FIFO without loss.
-- Retry/backoff cannot spin continuously while offline/server-down.
-- Default Traccar endpoint behavior remains compatible with existing server installations.
-- Android CI passes `flutter analyze`, `flutter test`, and APK build.
+Implemented modes:
+
+- `INSTANT` — upstream-compatible immediate draining.
+- `BATCH` — configurable interval + bounded burst.
+- `OFFLINE` — durable accumulation until manual `syncNow()`.
+
+The existing SQLDelight queue and uploader remain the only delivery pipeline. Rows are removed only after successful upload; online restoration and exponential retry/backoff remain active.
+
+Checklist:
+
+- [x] Smart Sync policy tests added.
+- [x] Instant/Batch/Offline behavior implemented without changing wire protocol.
+- [x] Manual full drain implemented.
+- [x] Existing FIFO queue retained.
+- [x] Existing network wait and exponential retry/backoff retained.
+- [x] Android client settings expose sync mode, batch size and interval.
+- [x] SDK GitHub CI passed for Smart Sync head.
+- [ ] Long offline accumulation test on device.
+- [ ] Reconnect and verify FIFO drain with no lost/duplicated positions.
+- [ ] Server-down test to confirm retry/backoff does not spin continuously.
+
+---
+
+## Task 5 — SDK Fork Integration
+
+**Status:** Android integration complete and pinned; upstream-maintenance procedure still required.
+
+Checklist:
+
+- [x] Fork `traccar/traccar-client-sdk` to `minhtuancn/traccar-client-sdk`.
+- [x] Implement Fresh Heartbeat, Adaptive Profiles and Smart Sync as stacked SDK PRs.
+- [x] Pin the client to immutable SDK commits using `vendor/traccar-client-sdk` gitlink.
+- [x] Use Gradle composite-build dependency substitution instead of publishing over official Maven coordinates.
+- [x] Add GitHub and Woodpecker CI definitions.
+- [x] Document Android-only client source substitution and iOS packaging limitation.
+- [ ] Document routine upstream sync/rebase procedure and conflict policy.
+- [ ] Evaluate moving watchdog ownership into SDK only after equivalent Android recovery behavior is proven by tests; until then keep the app-layer compatibility adapter.
+
+---
+
+## Task 6 — Sync Status Telemetry
+
+**Status:** implementation complete on stacked SDK/client branches; CI and device validation pending.
+
+Implemented:
+
+- SQLDelight queue `COUNT(*)` exposed through `PositionQueue.count()`.
+- `Tracker.pendingPositionCount()`.
+- persisted nullable `State.lastSuccessfulSyncMillis` with backward-compatible state decoding.
+- successful queue drain records last-success timestamp.
+- Android enhanced bridge returns queue depth and last-success time.
+- Status screen displays **Queued positions** and **Last successful sync**.
+
+Checklist:
+
+- [x] SDK telemetry contract tests added.
+- [x] Backward-compatibility test added for persisted state without telemetry field.
+- [x] SDK queue count and last-success timestamp implemented.
+- [x] Client bridge/model/UI implemented.
+- [x] Client gitlink pinned to the telemetry SDK commit.
+- [x] GitHub client workflow changed so stacked pull requests are eligible for verification.
+- [ ] SDK telemetry PR CI must complete successfully.
+- [ ] Client `flutter analyze`, `flutter test` and Android debug APK build must complete successfully.
+- [ ] Device test: queue count rises while offline/held, falls after sync, and timestamp advances only after successful upload.
+
+---
+
+## Current pull-request stack
+
+SDK dependency order:
+
+```text
+SDK PR #1 Fresh Heartbeat
+  -> SDK PR #2 Adaptive Tracking Profiles
+  -> SDK PR #3 Smart Offline / Batch Sync
+  -> SDK PR #4 Sync Status Telemetry
+```
+
+Client dependency order:
+
+```text
+Client PR #1 Managed-device + watchdog foundation
+  -> Client PR #2 Enhanced SDK integration
+  -> Client PR #3 Sync queue telemetry
+```
+
+SDK PR #1–#3 have successful GitHub CI evidence. SDK PR #4 and the client integration stack remain gated until their current automated verification completes successfully.
+
+---
+
+## Production verification gate
+
+Do **not** call the resilient-tracking project production-complete until all of these are true:
+
+- [ ] Client CI passes `flutter analyze`.
+- [ ] Client CI passes `flutter test`.
+- [ ] Client CI builds Android debug APK successfully with the pinned SDK submodule.
+- [ ] Explicit Stop remains stopped across watchdog ticks and reboot.
+- [ ] Ordinary process/service death recovers without opening Flutter UI.
+- [ ] Stationary heartbeat uses a fresh/age-bounded location or liveness-only fallback as designed.
+- [ ] Driving/walking/stationary transitions do not flap on the target Android device/OEM.
+- [ ] Offline positions survive process death/reboot and later drain FIFO without loss/duplication.
+- [ ] Retry/backoff behaves safely during prolonged network/server failure.
+- [ ] Queue telemetry matches actual offline/sync behavior.
+- [ ] Default Traccar endpoint behavior remains compatible with the target server.
+
+Automated tests prove policy and build integrity; Android background reliability still requires real-device validation because Doze and OEM battery management cannot be faithfully proven by unit tests alone.

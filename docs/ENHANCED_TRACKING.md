@@ -57,8 +57,10 @@ This split is intentional: it prevents the fork from publishing over the officia
                        v
              SQLDelight durable queue
                        |
-                       v
-                Traccar server
+              +--------+---------+
+              |                  |
+              v                  v
+        Queue telemetry      Traccar server
 ```
 
 The app-layer Service Watchdog is separate from the SDK engine and supplements, rather than replaces, the SDK foreground service, `START_STICKY`, `BootReceiver`, alarm heartbeat, queue and retry behavior.
@@ -148,6 +150,21 @@ Positions remain in the durable queue and are not automatically uploaded. Select
 
 Rows are deleted only after successful upload. Existing network retry/backoff remains in use.
 
+## Queue and sync telemetry
+
+The enhanced SDK exposes operational health without creating a second storage layer:
+
+- `pendingPositionCount()` reads the count directly from the existing SQLDelight `Position` table.
+- `State.lastSuccessfulSyncMillis` records the most recent successful queued-position upload and is persisted through the existing `StateStore` JSON record.
+- old persisted state without the telemetry field remains compatible because the field is nullable with a default value.
+
+The Android bridge returns both values from `getStatus`. The Status screen refreshes them with the existing five-second status refresh cycle and displays:
+
+- **Queued positions** — current durable queue depth.
+- **Last successful sync** — local date/time of the most recent successful queued upload, or `Never` when none has completed yet.
+
+These fields are diagnostics only. They do not alter upload scheduling, queue ordering or retry behavior.
+
 ## Tracking lifecycle and watchdog
 
 Every app entry point must use `GeolocationService.start()` and `GeolocationService.stop()` rather than calling `TraccarClientSdk.start/stop` directly. This currently covers:
@@ -196,18 +213,19 @@ flutter test
 flutter build apk --debug
 ```
 
-`.woodpecker.yml` runs the same sequence in self-hosted CI.
+`.woodpecker.yml` runs the same sequence in self-hosted CI. GitHub pull-request CI is also configured for stacked feature branches so integration branches can be verified before they target `main`.
 
 ## Updating the SDK pin
 
 Do not point the app at a moving SDK branch for production builds. Update the submodule to a reviewed SDK commit, commit the changed gitlink in this repository, and let CI validate the exact pair.
 
-Recommended dependency order for the current SDK stack is:
+Current dependency order is:
 
 ```text
 Fresh Heartbeat
       -> Adaptive Tracking Profiles
       -> Smart Offline / Batch Sync
+      -> Sync Status Telemetry
       -> client SDK pin update
 ```
 
@@ -215,10 +233,11 @@ Fresh Heartbeat
 
 A feature branch is not considered verified merely because it is mergeable. Before merging to the production branch, require evidence for:
 
-1. SDK `:core:check`.
+1. SDK core tests / checks.
 2. `flutter analyze`.
 3. `flutter test`.
 4. Android debug APK build.
-5. On-device smoke test for Start/Stop, reboot recovery, stationary heartbeat and queue recovery after a network outage.
+5. On-device smoke test for Start/Stop, reboot recovery, stationary heartbeat, adaptive transitions and queue recovery after a network outage.
+6. Status telemetry validation: queue depth rises while delivery is held/offline, falls after sync, and last-success time advances only after successful upload.
 
 The on-device checks are especially important because Android background execution and OEM battery-management behavior cannot be fully proven by unit tests alone.

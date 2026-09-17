@@ -18,18 +18,18 @@ pluginManagement {
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    id("com.android.application") version "8.13.2" apply false
+    id("com.android.application") version "9.2.0" apply false
     // START: FlutterFire Configuration
     id("com.google.gms.google-services") version("4.4.4") apply false
     id("com.google.firebase.crashlytics") version("3.0.6") apply false
     // END: FlutterFire Configuration
-    id("org.jetbrains.kotlin.android") version "2.2.20" apply false
+    id("org.jetbrains.kotlin.android") version "2.3.21" apply false
 }
 
 // Keep Flutter/Dart on the published plugin API while replacing only the
-// Android native core with the pinned fork in vendor/. This makes enhanced
-// Android behavior reproducible without publishing over Traccar's Maven
-// coordinates or relying on a mutable branch at build time.
+// Android native core with the pinned fork in vendor/. The app toolchain is
+// intentionally aligned with the forked SDK (AGP 9.2 / Kotlin 2.3.21) so the
+// composite build is evaluated by a compatible Gradle runtime.
 includeBuild("../vendor/traccar-client-sdk") {
     dependencySubstitution {
         substitute(module("org.traccar:traccar-client-sdk")).using(project(":core"))

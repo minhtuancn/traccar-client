@@ -9,6 +9,7 @@ void main() {
     ).readAsStringSync();
 
     expect(manifest, contains('android:excludeFromRecents="true"'));
+    expect(manifest, contains('android:name="org.traccar.client.MainActivity"'));
   });
 
   test('Android device admin receiver is registered', () {
@@ -16,7 +17,10 @@ void main() {
       'android/app/src/main/AndroidManifest.xml',
     ).readAsStringSync();
 
-    expect(manifest, contains('android:name=".ManagedDeviceAdminReceiver"'));
+    expect(
+      manifest,
+      contains('android:name="org.traccar.client.ManagedDeviceAdminReceiver"'),
+    );
     expect(manifest, contains('android.permission.BIND_DEVICE_ADMIN'));
     expect(manifest, contains('android.app.device_admin'));
     expect(manifest, contains('android.app.action.DEVICE_ADMIN_ENABLED'));
@@ -45,13 +49,23 @@ void main() {
       'android/app/src/main/AndroidManifest.xml',
     ).readAsStringSync();
 
-    expect(manifest, contains('android:name=".TrackingWatchdogReceiver"'));
     expect(
       manifest,
-      contains('android:name=".TrackingWatchdogBootReceiver"'),
+      contains('android:name="org.traccar.client.TrackingWatchdogReceiver"'),
+    );
+    expect(
+      manifest,
+      contains('android:name="org.traccar.client.TrackingWatchdogBootReceiver"'),
     );
     expect(manifest, contains('android.intent.action.BOOT_COMPLETED'));
     expect(manifest, contains('android.intent.action.MY_PACKAGE_REPLACED'));
+  });
+
+  test('app namespace is unique while installed package stays compatible', () {
+    final gradle = File('android/app/build.gradle.kts').readAsStringSync();
+
+    expect(gradle, contains('namespace = "org.traccar.client.app"'));
+    expect(gradle, contains('applicationId = "org.traccar.client"'));
   });
 
   test('watchdog uses persisted tracking intent and allow-while-idle alarm', () {

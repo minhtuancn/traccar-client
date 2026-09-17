@@ -1,0 +1,95 @@
+name: Beta Release
+
+on:
+  push:
+    branches:
+      - 'beta/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: beta-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-beta:
+    name: Build and publish Android beta
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve beta version
+        id: version
+        shell: bash
+        run: |
+          FULL_VERSION=$(awk '/^version:/{print $2}' pubspec.yaml)
+          VERSION=${FULL_VERSION%%+*}
+          if [[ "$VERSION" != *-beta.* ]]; then
+            echo "pubspec version must be a beta version, got: $FULL_VERSION" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "apk=traccar-client-$VERSION.apk" >> "$GITHUB_OUTPUT"
+
+      - name: Verify pinned SDK core
+        working-directory: vendor/traccar-client-sdk
+        run: ./gradlew :core:allTests --no-configuration-cache
+
+      - name: Flutter dependencies
+        run: flutter pub get
+
+      - name: Flutter analyze
+        run: flutter analyze
+
+      - name: Flutter tests
+        run: flutter test
+
+      - name: Build beta APK
+        run: flutter build apk --debug
+
+      - name: Prepare release files
+        shell: bash
+        run: |
+          cp build/app/outputs/flutter-apk/app-debug.apk "${{ steps.version.outputs.apk }}"
+          sha256sum "${{ steps.version.outputs.apk }}" > "${{ steps.version.outputs.apk }}.sha256"
+
+      - name: Upload CI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: traccar-client-${{ steps.version.outputs.version }}
+          path: |
+            ${{ steps.version.outputs.apk }}
+            ${{ steps.version.outputs.apk }}.sha256
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Create or update GitHub pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Traccar Client ${{ steps.version.outputs.version }}
+          prerelease: true
+          draft: false
+          body_path: docs/BETA_RELEASE.md
+          files: |
+            ${{ steps.version.outputs.apk }}
+            ${{ steps.version.outputs.apk }}.sha256

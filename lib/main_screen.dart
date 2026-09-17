@@ -88,10 +88,20 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     var started = false;
                     try {
                       await GeolocationService.tracker.start();
-                      await TrackingWatchdog.arm();
                       started = true;
                     } on PlatformException {
                       // permission denied or startup error
+                    }
+                    if (started) {
+                      try {
+                        await TrackingWatchdog.arm();
+                      } on PlatformException catch (error, stackTrace) {
+                        FirebaseCrashlytics.instance.recordError(
+                          error,
+                          stackTrace,
+                          reason: 'watchdog_arm_failed',
+                        );
+                      }
                     }
                     if (!mounted) return;
                     if (!started) {
@@ -106,7 +116,15 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   } else {
                     FirebaseCrashlytics.instance.log('tracking_toggle_stop');
                     await GeolocationService.tracker.stop();
-                    await TrackingWatchdog.cancel();
+                    try {
+                      await TrackingWatchdog.cancel();
+                    } on PlatformException catch (error, stackTrace) {
+                      FirebaseCrashlytics.instance.recordError(
+                        error,
+                        stackTrace,
+                        reason: 'watchdog_cancel_failed',
+                      );
+                    }
                     if (mounted) setState(() => trackingEnabled = false);
                   }
                 }

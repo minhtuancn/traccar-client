@@ -42,6 +42,8 @@
         </activity>
         <receiver
             android:name=".ManagedDeviceAdminReceiver"
+            android:label="@string/device_admin_label"
+            android:description="@string/device_admin_description"
             android:exported="true"
             android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data

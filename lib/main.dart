@@ -31,7 +31,7 @@ void main() async {
     return true;
   };
   await Preferences.init();
-  await GeolocationService.tracker.init(Preferences.buildConfig());
+  await GeolocationService.init(Preferences.buildConfig());
   await PasswordService.migrate();
   await PushService.init();
   await ManagedConfigService.init();

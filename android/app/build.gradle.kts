@@ -66,6 +66,14 @@ android {
     }
 }
 
+dependencies {
+    // The Flutter plugin also depends on this SDK, but uses Gradle
+    // `implementation`, which does not expose core classes to this app module.
+    // The watchdog intentionally uses the public native tracker API directly.
+    implementation("org.traccar:traccar-client-sdk:1.0.11")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
+}
+
 flutter {
     source = "../.."
 }

@@ -7,7 +7,7 @@
 - Target: Android
 - Application ID: `org.traccar.client`
 - Source branch: `beta/10.2.0-beta.1`
-- Status: merged feature stack on `main`; beta APK rebuilt from merged `main` before distribution
+- Status: resilient-tracking stack merged to `main`; beta APK rebuilt successfully from merged `main`
 
 ## Included resilient-tracking stack
 
@@ -25,16 +25,30 @@ The Android client pins `minhtuancn/traccar-client-sdk` as the `vendor/traccar-c
 
 The SDK fork keeps the original queue and Traccar/OsmAnd-compatible per-position upload protocol. It does not introduce a second queue or a proprietary JSON batch protocol.
 
-## Verification gates
+## Final beta verification
 
-The integrated stack has passed:
+The final beta artifact was built from merged client `main` with the beta version already set.
 
-- SDK Kotlin Multiplatform core verification.
-- Flutter analysis with zero issues.
-- 13 Flutter regression/integration tests.
-- Android debug APK compilation and artifact upload.
+GitHub Actions verification:
 
-The beta artifact is rebuilt from merged `main` after the beta version bump so that the distributed APK matches the beta source state for executable code and configuration.
+- Workflow: `Client Android Beta Build`
+- Run: `35208519120`
+- Result: **success**
+- SDK core verification: passed
+- Flutter analyze: passed with zero issues
+- Flutter tests: 13 passed
+- Android debug APK build: passed
+- SHA-256 generation: passed
+- Artifact upload: passed
+
+Final files:
+
+- APK: `traccar-client-10.2.0-beta.1.apk`
+- APK size: `185,818,790` bytes
+- APK SHA-256: `ac3b79a111e9b49ae99c6c104ec58821070f87ec565779a4ff4a9854d54581a6`
+- GitHub Actions artifact ZIP SHA-256: `7aa51cedff5d6520fcf726923294703903040868f78e95d0689ffcb05f448824`
+
+The CI-generated `.sha256` file matches the APK checksum above.
 
 ## Beta signing and upgrades
 

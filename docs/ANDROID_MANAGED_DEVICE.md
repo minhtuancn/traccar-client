@@ -7,7 +7,7 @@ This fork supports two Android deployment modes:
 
 Managed-device mode does not hide the process from Android system management. The Activity can be excluded from Recent Apps, while Android may still show an active foreground service and its required notification/indicators.
 
-For the full enhanced SDK architecture, Adaptive Profiles and Smart Sync settings, see [`ENHANCED_TRACKING.md`](ENHANCED_TRACKING.md).
+For the full enhanced SDK architecture, Adaptive Profiles and Smart Sync settings, see [`ENHANCED_TRACKING.md`](ENHANCED_TRACKING.md). The current Android validation build is `10.2.0-beta.1+159`; see [`BETA_RELEASE.md`](BETA_RELEASE.md).
 
 ## Provisioning
 
@@ -38,7 +38,7 @@ The fork adds a second recovery layer: `TrackingWatchdogScheduler` arms a 15-min
 
 The watchdog is intentionally not an exact timer. Doze can defer its delivery, so 15 minutes is a recovery target/cadence rather than a guaranteed wall-clock deadline.
 
-Every app entry point now routes Start/Stop through `GeolocationService`, including the main tracking switch, quick actions and action deep-links. This keeps watchdog arm/cancel semantics consistent.
+Every app entry point routes Start/Stop through `GeolocationService`, including the main tracking switch, quick actions and action deep-links. This keeps watchdog arm/cancel semantics consistent.
 
 For reliable tracking, grant Always/Background location access, allow notifications, keep location services enabled, and avoid placing the app in the OEM battery `Restricted` state. Device Owner deployments can improve policy control, but Android platform rules still apply.
 
@@ -87,6 +87,8 @@ The fork keeps the original SQLDelight durable queue and Traccar/OsmAnd-compatib
 
 Batch mode does not send a new JSON-array protocol. Each queued position is still sent through the existing uploader and removed only after a successful upload.
 
+The Status screen also reports queued-position count and the last successful queued upload timestamp.
+
 ## Android Force Stop boundary
 
 Android's user/OEM **Force stop** action is stronger than ordinary process death. A force-stopped package enters the stopped state and alarms/receivers may not run again until the package is explicitly launched or otherwise re-enabled by platform/device-management policy.
@@ -107,19 +109,22 @@ A true `/system/priv-app` installation requires control of the Android system im
 
 The Android app pins `minhtuancn/traccar-client-sdk` as `vendor/traccar-client-sdk`. Gradle composite-build dependency substitution replaces the official native Maven core with that exact pinned SDK commit.
 
-The current SDK stack is implemented as reviewed branches/PRs in dependency order:
+The complete SDK enhancement stack is now merged to `minhtuancn/traccar-client-sdk` `main`:
 
 1. Fresh-position Heartbeat.
 2. Adaptive Tracking Profiles.
 3. Smart Offline / Batch Sync.
+4. Sync status telemetry.
 
-The client gitlink should move only to a reviewed SDK commit and must be validated by CI after every pin update.
+The client itself has also merged the managed-device/watchdog, enhanced SDK integration, telemetry and Android build-toolchain work to `main`. Future gitlink updates should move only to reviewed SDK commits and must be validated by CI.
 
 ## Verification
 
-The repository includes a Woodpecker pipeline that initializes the submodule, runs the pinned SDK `:core:check`, runs Flutter analysis/tests and builds an Android debug APK.
+The repository includes a Woodpecker pipeline that initializes the submodule, runs the pinned SDK core verification, runs Flutter analysis/tests and builds an Android debug APK.
 
-Before production deployment also perform real-device tests for:
+The merged stack has passed automated SDK verification, Flutter analysis/tests and Android APK compilation. The remaining beta gate is physical-device behavior.
+
+Before production deployment perform real-device tests for:
 
 1. Start/Stop from the main screen, deep-link and quick action.
 2. Reboot while tracking is enabled.
@@ -128,4 +133,5 @@ Before production deployment also perform real-device tests for:
 5. Driving/walking/stationary profile changes.
 6. Network outage followed by recovery.
 7. Batch mode and manual Offline `Sync now`.
-8. OEM battery restriction behavior on the target device model.
+8. Queue count/last-success telemetry while accumulating and draining positions.
+9. OEM battery restriction behavior on the target device model.

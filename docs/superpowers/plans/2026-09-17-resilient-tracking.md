@@ -1,8 +1,10 @@
 # Resilient Android Tracking — Execution Status
 
+**Release status:** feature implementation has been merged into `main` in both `minhtuancn/traccar-client` and `minhtuancn/traccar-client-sdk`. Android beta `10.2.0-beta.1+159` is the current validation release. Automated SDK/client verification is complete; physical-device reliability validation remains open.
+
 **Goal:** Make the Android Traccar Client fork survive ordinary service/process death, produce trustworthy stationary heartbeats, adapt tracking cadence to device state, retain positions through network loss, and expose enough telemetry to diagnose delivery health without breaking Traccar protocol compatibility.
 
-**Architecture:** Flutter remains the UI/configuration layer. Location capture, heartbeat policy, adaptive profiles, durable queueing and Smart Sync live in the forked Traccar Client SDK. Android service recovery is supplemented by an app-layer watchdog until a stable SDK-level watchdog API is proven equivalent. The Android app consumes an immutable SDK gitlink through Gradle composite-build dependency substitution.
+**Architecture:** Flutter remains the UI/configuration layer. Location capture, heartbeat policy, adaptive profiles, durable queueing and Smart Sync live in the forked Traccar Client SDK. Android service recovery is supplemented by an app-layer watchdog. The Android app consumes an immutable SDK gitlink through Gradle composite-build dependency substitution.
 
 **Repositories:**
 
@@ -11,7 +13,7 @@
 
 ## Global constraints
 
-- Android is the first production target; iOS behavior must not regress.
+- Android is the first beta target; iOS behavior must not regress.
 - Do not copy AGPL-3.0 Colota source. Architecture/behavior may be studied and reimplemented clean-room only.
 - Do not hide the process or foreground location service from Android system/security surfaces.
 - Never restart tracking after an explicit user Stop; persisted tracker intent is authoritative.
@@ -23,7 +25,7 @@
 
 ## Task 1 — Android Service Watchdog
 
-**Status:** implementation complete; physical-device recovery gate pending.
+**Status:** merged to app `main`; physical-device recovery gate pending.
 
 Implemented in the app layer:
 
@@ -44,6 +46,7 @@ Checklist:
 - [x] Main switch, Quick Actions and action deep-links route through common `GeolocationService.start/stop` lifecycle.
 - [x] Explicit Stop is represented by persisted SDK state and watchdog never intentionally resurrects disabled tracking.
 - [x] Android Force Stop boundary documented.
+- [x] Changes merged to app `main`.
 - [ ] Verify ordinary process/service death recovery on a physical Android device.
 - [ ] Reboot device and verify tracking/watchdog recovery without opening Flutter UI.
 - [ ] Leave explicitly stopped for at least one watchdog interval and confirm it remains stopped.
@@ -52,9 +55,9 @@ Checklist:
 
 ## Task 2 — Fresh-Position Heartbeat
 
-**Status:** SDK implementation and automated CI complete; device validation pending.
+**Status:** merged to SDK `main`; automated CI complete; device validation pending.
 
-Implemented in SDK PR #1 and carried by the pinned SDK stack:
+Implemented:
 
 - `LocationConfig.heartbeatMaxAgeSeconds`
 - fresh `fetchOnce()` attempt remains first choice
@@ -69,14 +72,15 @@ Checklist:
 - [x] Heartbeat age policy integrated into `TrackerEngine`.
 - [x] Existing queue/uploader pipeline preserved.
 - [x] Client exposes conservative heartbeat max-age setting (default 300 s).
-- [x] SDK GitHub CI passed for the heartbeat head.
+- [x] SDK GitHub CI passed.
+- [x] Changes merged to SDK `main`.
 - [ ] Physical stationary-device test: verify old cached coordinates are not represented as fresh fixes.
 
 ---
 
 ## Task 3 — Adaptive Tracking Profiles
 
-**Status:** SDK implementation and automated CI complete; real motion/OEM validation pending.
+**Status:** merged to SDK `main`; automated CI complete; real motion/OEM validation pending.
 
 Profiles implemented:
 
@@ -96,7 +100,8 @@ Checklist:
 - [x] Android motion/activity + battery/charging inputs integrated.
 - [x] iOS implementation retained in SDK fork.
 - [x] Active profile exposed to Android Flutter client Status UI.
-- [x] SDK GitHub CI passed for the adaptive-profile head.
+- [x] SDK GitHub CI passed.
+- [x] Changes merged to SDK `main`.
 - [ ] Physical walking/driving/stationary transition test with noisy GPS/activity signals.
 - [ ] Verify charging and low-battery profile priority on a real device.
 
@@ -104,7 +109,7 @@ Checklist:
 
 ## Task 4 — Smart Offline / Batch Sync
 
-**Status:** queue policy and automated CI complete; long offline/reconnect validation pending.
+**Status:** merged to SDK `main`; queue policy and automated CI complete; long offline/reconnect validation pending.
 
 Implemented modes:
 
@@ -122,7 +127,8 @@ Checklist:
 - [x] Existing FIFO queue retained.
 - [x] Existing network wait and exponential retry/backoff retained.
 - [x] Android client settings expose sync mode, batch size and interval.
-- [x] SDK GitHub CI passed for Smart Sync head.
+- [x] SDK GitHub CI passed.
+- [x] Changes merged to SDK `main`.
 - [ ] Long offline accumulation test on device.
 - [ ] Reconnect and verify FIFO drain with no lost/duplicated positions.
 - [ ] Server-down test to confirm retry/backoff does not spin continuously.
@@ -131,24 +137,27 @@ Checklist:
 
 ## Task 5 — SDK Fork Integration
 
-**Status:** Android integration complete and pinned; upstream-maintenance procedure still required.
+**Status:** merged to app `main`; reproducible source pin and upstream-maintenance documentation complete.
 
 Checklist:
 
 - [x] Fork `traccar/traccar-client-sdk` to `minhtuancn/traccar-client-sdk`.
-- [x] Implement Fresh Heartbeat, Adaptive Profiles and Smart Sync as stacked SDK PRs.
-- [x] Pin the client to immutable SDK commits using `vendor/traccar-client-sdk` gitlink.
+- [x] Implement Fresh Heartbeat, Adaptive Profiles, Smart Sync and sync telemetry.
+- [x] Pin the client to an immutable SDK commit using `vendor/traccar-client-sdk` gitlink.
 - [x] Use Gradle composite-build dependency substitution instead of publishing over official Maven coordinates.
 - [x] Add GitHub and Woodpecker CI definitions.
 - [x] Document Android-only client source substitution and iOS packaging limitation.
-- [ ] Document routine upstream sync/rebase procedure and conflict policy.
-- [ ] Evaluate moving watchdog ownership into SDK only after equivalent Android recovery behavior is proven by tests; until then keep the app-layer compatibility adapter.
+- [x] Document routine SDK upstream sync/rebase procedure and conflict policy in `traccar-client-sdk/docs/UPSTREAM_SYNC.md`.
+- [x] Upgrade Android build compatibility to Gradle 9.5.1 / AGP 9.2.0 / Kotlin 2.3.21.
+- [x] Keep application ID `org.traccar.client` while separating app build namespace from the SDK namespace.
+- [x] Changes merged to app `main`.
+- [ ] Evaluate moving watchdog ownership into SDK only after equivalent Android recovery behavior is proven by device tests.
 
 ---
 
 ## Task 6 — Sync Status Telemetry
 
-**Status:** implementation complete on stacked SDK/client branches; CI and device validation pending.
+**Status:** merged to SDK/app `main`; automated CI complete; device validation pending.
 
 Implemented:
 
@@ -166,43 +175,55 @@ Checklist:
 - [x] SDK queue count and last-success timestamp implemented.
 - [x] Client bridge/model/UI implemented.
 - [x] Client gitlink pinned to the telemetry SDK commit.
-- [x] GitHub client workflow changed so stacked pull requests are eligible for verification.
-- [ ] SDK telemetry PR CI must complete successfully.
-- [ ] Client `flutter analyze`, `flutter test` and Android debug APK build must complete successfully.
+- [x] SDK telemetry CI completed successfully.
+- [x] Integrated client `flutter analyze` passed with zero issues.
+- [x] Integrated client Flutter regression/integration tests passed (13 tests).
+- [x] Integrated Android debug APK build and artifact upload succeeded.
+- [x] Changes merged to SDK and app `main`.
 - [ ] Device test: queue count rises while offline/held, falls after sync, and timestamp advances only after successful upload.
 
 ---
 
-## Current pull-request stack
+## Merge and beta milestone
 
-SDK dependency order:
+All previously stacked pull requests have been merged in dependency order.
 
-```text
-SDK PR #1 Fresh Heartbeat
-  -> SDK PR #2 Adaptive Tracking Profiles
-  -> SDK PR #3 Smart Offline / Batch Sync
-  -> SDK PR #4 Sync Status Telemetry
-```
-
-Client dependency order:
+SDK:
 
 ```text
-Client PR #1 Managed-device + watchdog foundation
-  -> Client PR #2 Enhanced SDK integration
-  -> Client PR #3 Sync queue telemetry
+PR #1 Fresh Heartbeat
+  -> PR #2 Adaptive Tracking Profiles
+  -> PR #3 Smart Offline / Batch Sync
+  -> PR #4 Sync Status Telemetry
+  -> main
 ```
 
-SDK PR #1–#3 have successful GitHub CI evidence. SDK PR #4 and the client integration stack remain gated until their current automated verification completes successfully.
+Client:
+
+```text
+PR #1 Managed-device + watchdog foundation
+  -> PR #2 Enhanced SDK integration
+  -> PR #3 Sync queue telemetry + Android toolchain compatibility
+  -> main
+```
+
+Current beta version: `10.2.0-beta.1+159`.
+
+See `CHANGELOG.md` and `docs/BETA_RELEASE.md` for the release-facing summary and device validation checklist.
 
 ---
 
 ## Production verification gate
 
-Do **not** call the resilient-tracking project production-complete until all of these are true:
+Automated gates:
 
-- [ ] Client CI passes `flutter analyze`.
-- [ ] Client CI passes `flutter test`.
-- [ ] Client CI builds Android debug APK successfully with the pinned SDK submodule.
+- [x] Client `flutter analyze` passes.
+- [x] Client `flutter test` passes.
+- [x] Android debug APK builds successfully with the pinned SDK submodule.
+- [x] SDK core and Flutter wrapper verification pass.
+
+Physical-device gates before calling the resilient-tracking work production-complete:
+
 - [ ] Explicit Stop remains stopped across watchdog ticks and reboot.
 - [ ] Ordinary process/service death recovers without opening Flutter UI.
 - [ ] Stationary heartbeat uses a fresh/age-bounded location or liveness-only fallback as designed.

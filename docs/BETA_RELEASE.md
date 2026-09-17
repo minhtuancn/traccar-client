@@ -7,7 +7,8 @@
 - Target: Android
 - Application ID: `org.traccar.client`
 - Source branch: `beta/10.2.0-beta.1`
-- Status: resilient-tracking stack merged to `main`; beta APK rebuilt successfully from merged `main`
+- GitHub tag: `v10.2.0-beta.1`
+- Release type: GitHub Pre-release
 
 ## Included resilient-tracking stack
 
@@ -25,30 +26,15 @@ The Android client pins `minhtuancn/traccar-client-sdk` as the `vendor/traccar-c
 
 The SDK fork keeps the original queue and Traccar/OsmAnd-compatible per-position upload protocol. It does not introduce a second queue or a proprietary JSON batch protocol.
 
-## Final beta verification
+## GitHub Actions
 
-The final beta artifact was built from merged client `main` with the beta version already set.
+The app repository owns both CI and beta publishing:
 
-GitHub Actions verification:
+- `.github/workflows/build.yml` runs SDK core verification, `flutter analyze`, `flutter test`, builds a debug APK, generates SHA-256, and uploads the artifact for `main`, beta branches, pull requests, and manual runs.
+- `.github/workflows/beta-release.yml` runs on `beta/**` and manual dispatch. It verifies the pinned SDK and Flutter app, builds the beta APK, generates SHA-256, uploads the CI artifact, creates/updates tag `v<beta-version>`, and publishes a GitHub Pre-release with the APK and checksum attached.
+- `.github/workflows/release.yml` remains the production publishing workflow. Pre-release tags containing `-` are excluded from the production tag trigger so beta/RC tags cannot accidentally publish to Google Play or App Store.
 
-- Workflow: `Client Android Beta Build`
-- Run: `35208519120`
-- Result: **success**
-- SDK core verification: passed
-- Flutter analyze: passed with zero issues
-- Flutter tests: 13 passed
-- Android debug APK build: passed
-- SHA-256 generation: passed
-- Artifact upload: passed
-
-Final files:
-
-- APK: `traccar-client-10.2.0-beta.1.apk`
-- APK size: `185,818,790` bytes
-- APK SHA-256: `ac3b79a111e9b49ae99c6c104ec58821070f87ec565779a4ff4a9854d54581a6`
-- GitHub Actions artifact ZIP SHA-256: `7aa51cedff5d6520fcf726923294703903040868f78e95d0689ffcb05f448824`
-
-The CI-generated `.sha256` file matches the APK checksum above.
+The beta workflow generates the final artifact metadata dynamically from the APK it just built, including workflow run ID, source commit, file size, and SHA-256. This avoids stale checksums in release notes.
 
 ## Beta signing and upgrades
 

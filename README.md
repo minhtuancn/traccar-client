@@ -1,6 +1,6 @@
-# Traccar Client app — resilient tracking fork
+# ZalGps — resilient GPS tracking
 
-This repository is a fork of the official [Traccar Client](https://www.traccar.org/client) app. It keeps Traccar server/protocol compatibility while adding reliability features for long-running Android tracking and managed-device deployments.
+ZalGps is based on the official [Traccar Client](https://www.traccar.org/client) app. It keeps Traccar server/protocol compatibility while adding reliability features for long-running Android tracking and managed-device deployments.
 
 ## Current beta
 

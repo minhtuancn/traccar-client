@@ -1,5 +1,5 @@
 name: traccar_client
-description: "Traccar Client"
+description: "ZalGps GPS tracking client"
 publish_to: 'none'
 version: 10.2.0-beta.1+159
 

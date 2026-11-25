@@ -40,6 +40,12 @@ jobs:
       - name: Flutter dependencies
         run: flutter pub get
 
+      - name: Install branding renderer
+        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
+
+      - name: Generate ZalGps launcher icons
+        run: ./tool/generate_branding.sh
+
       - name: Flutter analyze
         run: flutter analyze
 
@@ -52,15 +58,15 @@ jobs:
       - name: Rename APK
         run: |
           VERSION=$(awk '/^version:/{print $2}' pubspec.yaml | cut -d+ -f1)
-          cp build/app/outputs/flutter-apk/app-debug.apk "traccar-client-${VERSION}-debug.apk"
-          sha256sum "traccar-client-${VERSION}-debug.apk" > "traccar-client-${VERSION}-debug.apk.sha256"
+          cp build/app/outputs/flutter-apk/app-debug.apk "zalgps-${VERSION}-debug.apk"
+          sha256sum "zalgps-${VERSION}-debug.apk" > "zalgps-${VERSION}-debug.apk.sha256"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: traccar-client-android-debug
+          name: zalgps-android-debug
           path: |
-            traccar-client-*-debug.apk
-            traccar-client-*-debug.apk.sha256
+            zalgps-*-debug.apk
+            zalgps-*-debug.apk.sha256
           if-no-files-found: error
           retention-days: 30

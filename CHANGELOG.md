@@ -1,6 +1,15 @@
 # Changelog
 
-All notable changes to the resilient-tracking fork are documented here.
+All notable changes to the ZalGps resilient-tracking fork are documented here.
+
+## 10.2.0-beta.2 — 2026-11-25
+
+### Branding
+
+- Renamed the user-facing application from Traccar Client to **ZalGps**.
+- Added a dedicated ZalGps GPS-pin/Z launcher icon source.
+- Added reproducible Android/iOS launcher-icon generation through `flutter_launcher_icons`.
+- Kept Android application ID `org.traccar.client`, deep-link scheme and Traccar/OsmAnd protocol compatibility unchanged.
 
 ## 10.2.0-beta.1 — 2026-09-17
 

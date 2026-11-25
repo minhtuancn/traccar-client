@@ -195,7 +195,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Traccar Client'),
+        title: const Text('ZalGps'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

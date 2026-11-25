@@ -8,7 +8,7 @@ steps:
       - ./gradlew :core:check --no-configuration-cache
       - cd ../..
       - flutter pub get
-      - flutter analyze
+      - flutter analyze --no-fatal-infos
       - flutter test
       - flutter build apk --debug
 

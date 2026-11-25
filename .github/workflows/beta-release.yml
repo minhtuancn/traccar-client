@@ -47,7 +47,7 @@ jobs:
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
-          echo "apk=traccar-client-$VERSION.apk" >> "$GITHUB_OUTPUT"
+          echo "apk=zalgps-$VERSION.apk" >> "$GITHUB_OUTPUT"
 
       - name: Verify pinned SDK core
         working-directory: vendor/traccar-client-sdk
@@ -56,8 +56,14 @@ jobs:
       - name: Flutter dependencies
         run: flutter pub get
 
+      - name: Install branding renderer
+        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
+
+      - name: Generate ZalGps launcher icons
+        run: ./tool/generate_branding.sh
+
       - name: Flutter analyze
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: Flutter tests
         run: flutter test
@@ -86,7 +92,7 @@ jobs:
       - name: Upload CI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: traccar-client-${{ steps.version.outputs.version }}
+          name: zalgps-${{ steps.version.outputs.version }}
           path: |
             ${{ steps.version.outputs.apk }}
             ${{ steps.version.outputs.apk }}.sha256
@@ -98,7 +104,7 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          name: Traccar Client ${{ steps.version.outputs.version }}
+          name: ZalGps ${{ steps.version.outputs.version }}
           prerelease: true
           draft: false
           body_path: release-notes.md

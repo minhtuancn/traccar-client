@@ -1,12 +1,12 @@
-# Traccar Client app — resilient tracking fork
+# ZalGps — resilient GPS tracking
 
-This repository is a fork of the official [Traccar Client](https://www.traccar.org/client) app. It keeps Traccar server/protocol compatibility while adding reliability features for long-running Android tracking and managed-device deployments.
+ZalGps is based on the official [Traccar Client](https://www.traccar.org/client) app. It keeps Traccar server/protocol compatibility while adding reliability features for long-running Android tracking and managed-device deployments.
 
 ## Current beta
 
-**Android beta:** `10.2.0-beta.1+159` (2026-09-17)
+**Android beta:** `10.2.0-beta.2+160` (2026-11-25)
 
-The resilient-tracking feature stack has been merged to `main`. The beta includes managed-device watchdog/recovery, fresh-position heartbeat, adaptive tracking profiles, Smart Sync, and durable queue telemetry.
+ZalGps branding (new app name and launcher icon) is included alongside the resilient-tracking stack. The beta includes managed-device watchdog/recovery, fresh-position heartbeat, adaptive tracking profiles, Smart Sync, and durable queue telemetry.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for release changes and [`docs/BETA_RELEASE.md`](docs/BETA_RELEASE.md) for installation/validation guidance and platform boundaries.
 
@@ -72,10 +72,11 @@ git submodule sync --recursive
 git submodule update --init --recursive
 ```
 
-Then build normally:
+Then build normally. Generate ZalGps launcher icons before packaging:
 
 ```shell
 flutter pub get
+./tool/generate_branding.sh
 flutter analyze
 flutter test
 flutter build apk --debug

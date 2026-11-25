@@ -1,14 +1,21 @@
-# Android Beta Release
+# ZalGps Android Beta Release
 
 ## Current beta
 
-- Version: `10.2.0-beta.1+159`
-- Release date: 2026-09-17
+- Version: `10.2.0-beta.2+160`
+- Release date: 2026-11-25
 - Target: Android
 - Application ID: `org.traccar.client`
-- Source branch: `beta/10.2.0-beta.1`
-- GitHub tag: `v10.2.0-beta.1`
+- Source branch: `beta/10.2.0-beta.2`
+- GitHub tag: `v10.2.0-beta.2`
 - Release type: GitHub Pre-release
+
+## ZalGps branding
+
+- User-facing app name: **ZalGps**.
+- New ZalGps location-pin/Z launcher icon generated reproducibly for Android and iOS.
+- Android application ID remains `org.traccar.client` for compatibility.
+- Deep-link scheme and Traccar/OsmAnd protocol behavior are unchanged.
 
 ## Included resilient-tracking stack
 

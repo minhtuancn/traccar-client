@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="device_admin_label">Traccar Client device administrator</string>
-    <string name="device_admin_description">Allows this device to be provisioned as a managed Traccar tracking device.</string>
+    <string name="app_name">ZalGps</string>
+    <string name="device_admin_label">ZalGps device administrator</string>
+    <string name="device_admin_description">Allows this device to be provisioned as a managed ZalGps tracking device.</string>
 </resources>

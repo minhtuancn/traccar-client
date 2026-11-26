@@ -77,8 +77,13 @@ class Traccar:
                      "Accept": "application/json"},
             method=method,
         )
+        class NoRedirect(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                return None
+
         try:
-            with urllib.request.urlopen(req, timeout=6) as response:
+            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+            with opener.open(req, timeout=6) as response:
                 return json.load(response)
         except (urllib.error.URLError, TimeoutError, ValueError):
             raise EnrollmentError(503, "traccar_unavailable") from None
@@ -88,11 +93,13 @@ class Traccar:
             raise EnrollmentError(503, "enrollment_not_configured")
         if self._verified_at and time.monotonic() - self._verified_at < 60:
             return
-        user = self.request("GET", "session")
+        # Traccar session identity uses the documented token query parameter.
+        # This request is strictly loopback; never send it through the public proxy.
+        user = self.request("GET", "session?" + urllib.parse.urlencode({"token": self.token}))
         if (not isinstance(user, dict) or user.get("administrator") is not False
-                or user.get("userLimit") != 0 or user.get("readonly")
-                or user.get("deviceReadonly") or user.get("disabled")
-                or not isinstance(user.get("deviceLimit"), int)
+                or user.get("userLimit") != 0 or user.get("readonly") is not False
+                or user.get("deviceReadonly") is not False or user.get("disabled") is not False
+                or type(user.get("deviceLimit")) is not int
                 or not 1 <= user["deviceLimit"] <= 1000):
             raise EnrollmentError(503, "invalid_service_account_scope")
         self._verified_at = time.monotonic()

@@ -19,7 +19,7 @@ The API is independent of Traccar and uses its documented REST API. It never mod
 ## API
 
 - GET /healthz: liveness.
-- GET /readyz: checks the Traccar account scope (non-admin, finite device limit, no user-management permissions).
+- GET /readyz: checks the Traccar account scope (non-admin, finite device limit, no user-management permissions). The upstream session identity request uses the documented token query parameter over loopback only; do not enable upstream access logging of full query strings. All upstream requests reject redirects and ignore environment HTTP proxies.
 - POST /v1/enroll: JSON activationCode, installationId (32 lowercase hex characters), model.
 - Response: deviceId, name, serverUrl, config. The current client deliberately uses reviewed local tracking defaults, not arbitrary remote config. Enrollment does not start tracking.
 

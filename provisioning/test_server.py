@@ -2,7 +2,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from server import Enrollment, EnrollmentError, issue, connect
+from server import Enrollment, EnrollmentError, Traccar, issue, connect
+from unittest.mock import Mock
 
 
 class FakeTraccar:
@@ -71,6 +72,36 @@ class EnrollmentTests(unittest.TestCase):
         with self.assertRaises(EnrollmentError) as err:
             self.service.enroll(self.body)
         self.assertEqual(err.exception.status, 403)
+
+
+class ScopeTests(unittest.TestCase):
+    def setUp(self):
+        self.upstream = Traccar("test-only-placeholder")
+        self.account = {"administrator": False, "userLimit": 0, "readonly": False,
+                        "deviceReadonly": False, "disabled": False, "deviceLimit": 100}
+        self.upstream.request = Mock(return_value=self.account)
+
+    def test_scoped_account(self):
+        self.upstream.verify_scope()
+        self.upstream.request.assert_called_once_with("GET", "session?token=test-only-placeholder")
+
+    def test_reject_overprivileged_or_readonly_accounts(self):
+        for changes in ({"administrator": True}, {"userLimit": -1}, {"deviceLimit": -1},
+                        {"deviceLimit": True}, {"readonly": True}, {"deviceReadonly": True},
+                        {"disabled": True}):
+            with self.subTest(changes=changes):
+                self.upstream.request.return_value = {**self.account, **changes}
+                with self.assertRaises(EnrollmentError):
+                    self.upstream.verify_scope()
+
+    def test_missing_scope_fields_fail_closed(self):
+        self.upstream.request.return_value = {"administrator": False, "userLimit": 0, "deviceLimit": 100}
+        with self.assertRaises(EnrollmentError):
+            self.upstream.verify_scope()
+
+    def test_unconfigured_account(self):
+        with self.assertRaises(EnrollmentError):
+            Traccar("").verify_scope()
 
 
 if __name__ == "__main__":

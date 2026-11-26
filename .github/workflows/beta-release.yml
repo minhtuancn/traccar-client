@@ -118,8 +118,8 @@ jobs:
           flutter build apk --release
           apksigner=$(find "${ANDROID_HOME:?}/build-tools" -type f -name apksigner | sort -V | tail -1)
           "$apksigner" verify --print-certs build/app/outputs/flutter-apk/app-release.apk > "$signing_dir/verification.txt"
-          actual=$(awk -F': ' '/^Signer #1 certificate SHA-256 digest:/{print tolower($2)}' "$signing_dir/verification.txt")
-          [[ "$actual" == "$expected" ]] || { echo "::error::APK signing certificate mismatch"; exit 1; }
+          actual=$(awk -F': ' '/^Signer #1 certificate SHA-256 digest:/{print tolower($2)}' "$signing_dir/verification.txt" | tr -d ':[:space:]')
+          [[ "$actual" == "$expected" ]] || { echo "::error::APK signing certificate mismatch (expected $expected, actual $actual)"; exit 1; }
           printf '%s\n' "$actual" > signing-certificate.sha256
           echo "Verified ZalGps signing certificate SHA-256: $actual"
 

@@ -10,8 +10,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: beta-release-${{ github.ref }}
-  cancel-in-progress: true
+  group: beta-release-${{ github.repository }}
+  cancel-in-progress: false
 
 jobs:
   android-beta:
@@ -49,6 +49,19 @@ jobs:
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
           echo "apk=zalgps-$VERSION.apk" >> "$GITHUB_OUTPUT"
 
+      - name: Reject an already published beta tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" >/dev/null; then
+            echo "::error::Tag $RELEASE_TAG already exists. Increment the beta version."
+            exit 1
+          else
+            code=$?
+            [[ "$code" == 2 ]] || exit "$code"
+          fi
+
       - name: Verify pinned SDK core
         working-directory: vendor/traccar-client-sdk
         run: ./gradlew :core:allTests --no-configuration-cache
@@ -68,14 +81,53 @@ jobs:
       - name: Flutter tests
         run: flutter test
 
-      - name: Build beta APK
-        run: flutter build apk --debug
+      - name: Build signed beta APK
+        shell: bash
+        env:
+          ZALGPS_KEYSTORE_BASE64: ${{ secrets.ZALGPS_KEYSTORE_BASE64 }}
+          ZALGPS_KEYSTORE_PASSWORD: ${{ secrets.ZALGPS_KEYSTORE_PASSWORD }}
+          ZALGPS_KEY_ALIAS: ${{ secrets.ZALGPS_KEY_ALIAS }}
+          ZALGPS_KEY_PASSWORD: ${{ secrets.ZALGPS_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in ZALGPS_KEYSTORE_BASE64 ZALGPS_KEYSTORE_PASSWORD ZALGPS_KEY_ALIAS ZALGPS_KEY_PASSWORD; do
+            [[ -n "${!name}" ]] || { echo "::error::Missing signing secret $name"; exit 1; }
+          done
+          umask 077
+          signing_dir=$(mktemp -d "$RUNNER_TEMP/zalgps-signing.XXXXXX")
+          trap 'rm -rf "$signing_dir"' EXIT
+          export ZALGPS_SIGNING_PROPERTIES="$signing_dir/key.properties"
+          export ZALGPS_KEYSTORE_PATH="$signing_dir/zalgps.p12"
+          printf '%s' "$ZALGPS_KEYSTORE_BASE64" | base64 --decode > "$ZALGPS_KEYSTORE_PATH"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          def escape(value):
+              return ''.join('\\u%04x' % ord(ch) if ord(ch) <= 0xffff else ''.join('\\u%04x' % int.from_bytes(ch.encode('utf-16-be')[i:i+2], 'big') for i in (0, 2)) for ch in value)
+          values = {
+              'storeFile': os.environ['ZALGPS_KEYSTORE_PATH'],
+              'storePassword': os.environ['ZALGPS_KEYSTORE_PASSWORD'],
+              'keyAlias': os.environ['ZALGPS_KEY_ALIAS'],
+              'keyPassword': os.environ['ZALGPS_KEY_PASSWORD'],
+          }
+          Path(os.environ['ZALGPS_SIGNING_PROPERTIES']).write_text(''.join(k+'='+escape(v)+'\n' for k,v in values.items()), encoding='ascii')
+          PY
+          keytool -exportcert -keystore "$ZALGPS_KEYSTORE_PATH" -storepass:env ZALGPS_KEYSTORE_PASSWORD -alias "$ZALGPS_KEY_ALIAS" -file "$signing_dir/cert.der"
+          expected=$(sha256sum "$signing_dir/cert.der" | cut -d' ' -f1)
+          unset ZALGPS_KEYSTORE_BASE64 ZALGPS_KEYSTORE_PASSWORD ZALGPS_KEY_ALIAS ZALGPS_KEY_PASSWORD
+          flutter build apk --release
+          apksigner=$(find "${ANDROID_HOME:?}/build-tools" -type f -name apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs build/app/outputs/flutter-apk/app-release.apk > "$signing_dir/verification.txt"
+          actual=$(awk -F': ' '/^Signer #1 certificate SHA-256 digest:/{print tolower($2)}' "$signing_dir/verification.txt")
+          [[ "$actual" == "$expected" ]] || { echo "::error::APK signing certificate mismatch"; exit 1; }
+          printf '%s\n' "$actual" > signing-certificate.sha256
+          echo "Verified ZalGps signing certificate SHA-256: $actual"
 
       - name: Prepare release files
         shell: bash
         run: |
           APK="${{ steps.version.outputs.apk }}"
-          cp build/app/outputs/flutter-apk/app-debug.apk "$APK"
+          cp build/app/outputs/flutter-apk/app-release.apk "$APK"
           sha256sum "$APK" > "$APK.sha256"
 
           APK_SHA=$(sha256sum "$APK" | awk '{print $1}')
@@ -88,6 +140,7 @@ jobs:
           printf -- '- APK: `%s`\n' "$APK" >> release-notes.md
           printf -- '- APK size: `%s` bytes\n' "$APK_SIZE" >> release-notes.md
           printf -- '- APK SHA-256: `%s`\n' "$APK_SHA" >> release-notes.md
+          printf -- '- Signing certificate SHA-256: `%s`\n' "$(cat signing-certificate.sha256)" >> release-notes.md
 
       - name: Upload CI artifact
         uses: actions/upload-artifact@v4

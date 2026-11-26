@@ -81,6 +81,9 @@ jobs:
       - name: Flutter tests
         run: flutter test
 
+      - name: Test APK signer report parser
+        run: python3 -m unittest discover -s tool -p test_verify_apk_signer.py -v
+
       - name: Build signed beta APK
         shell: bash
         env:
@@ -119,23 +122,7 @@ jobs:
           apksigner=$(find "${ANDROID_HOME:?}/build-tools" -type f -name apksigner | sort -V | tail -1)
           "$apksigner" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk > "$signing_dir/verification.txt" 2>&1
           cat "$signing_dir/verification.txt"
-          actual=$(python3 - "$signing_dir/verification.txt" <<'PY'
-          import re
-          import sys
-          from pathlib import Path
-          report = Path(sys.argv[1]).read_text()
-          fingerprints = []
-          for line in report.splitlines():
-              if re.search(r'certificate\s+SHA[- ]?256(?:\s+digest)?\s*:', line, re.I):
-                  fingerprint = re.sub(r'[:\s]', '', line.split(':', 1)[1]).lower()
-                  if re.fullmatch(r'[0-9a-f]{64}', fingerprint):
-                      fingerprints.append(fingerprint)
-          if len(fingerprints) != 1:
-              sys.exit("Expected exactly one APK signer certificate SHA-256 fingerprint")
-          print(fingerprints[0])
-          PY
-          )
-          [[ "$actual" == "$expected" ]] || { echo "::error::APK signing certificate mismatch (expected $expected, actual $actual)"; exit 1; }
+          actual=$(python3 tool/verify_apk_signer.py "$signing_dir/verification.txt" "$expected")
           printf '%s\n' "$actual" > signing-certificate.sha256
           echo "Verified ZalGps signing certificate SHA-256: $actual"
 

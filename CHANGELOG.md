@@ -2,6 +2,13 @@
 
 All notable changes to the ZalGps resilient-tracking fork are documented here.
 
+## 10.2.0-beta.3 — 2026-11-26
+
+- Configure persistent ZalGps release signing via GitHub Actions Secrets.
+- Verify the APK signing certificate against the configured keystore before publishing.
+- Reject reuse of published beta tags.
+- First signed beta candidate; upgrading from debug-signed builds requires migration or reinstall if certificates differ.
+
 ## 10.2.0-beta.2 — 2026-11-25
 
 ### Branding

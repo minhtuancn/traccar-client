@@ -86,12 +86,14 @@ class Preferences {
     if (instance.getString(id) == null) {
       await instance.setString(
         id,
-        (Random().nextInt(90000000) + 10000000).toString(),
+        (Random.secure().nextInt(90000000) + 10000000).toString(),
       );
-      await instance.setString(url, 'http://demo.traccar.org:5055');
-      await instance.setString(accuracy, 'medium');
-      await instance.setInt(interval, 300);
-      await instance.setInt(distance, 75);
+      await instance.setString(url, 'https://gps.go7s.net/');
+      await instance.setString(accuracy, 'high');
+      await instance.setInt(interval, 30);
+      await instance.setInt(distance, 25);
+      await instance.setInt(heartbeat, 300);
+      await instance.setBool(wakelock, false);
       await instance.setBool(buffer, true);
       await instance.setBool(stopDetection, true);
     }

@@ -20,6 +20,8 @@ class PushService {
     unawaited(_uploadInitialToken());
   }
 
+  static Future<void> refreshRegistration() => _uploadInitialToken();
+
   static Future<void> _uploadInitialToken() async {
     try {
       await _uploadToken(await FirebaseMessaging.instance.getToken());
@@ -29,16 +31,22 @@ class PushService {
   }
 
   static Future<void> _onMessage(RemoteMessage message) async {
+    await Preferences.instance.reloadCache();
+    if (Preferences.canEnroll) return;
     final command = message.data['command'];
+    if ((command == 'positionSingle' || command == 'positionPeriodic') &&
+        Preferences.instance.getBool(Preferences.locationCommandsAllowed) == false) {
+      return;
+    }
     FirebaseCrashlytics.instance.log('push_command: $command');
     try {
       switch (command) {
         case 'positionSingle':
-          await GeolocationService.tracker.requestPosition();
+          await GeolocationService.requestPosition();
         case 'positionPeriodic':
-          await GeolocationService.tracker.start();
+          await GeolocationService.start();
         case 'positionStop':
-          await GeolocationService.tracker.stop();
+          await GeolocationService.stop();
         case 'factoryReset':
           await PasswordService.setPassword('');
       }
@@ -48,7 +56,7 @@ class PushService {
   }
 
   static Future<void> _uploadToken(String? token) async {
-    if (token == null) return;
+    if (token == null || Preferences.canEnroll) return;
     final id = Preferences.instance.getString(Preferences.id);
     final url = Preferences.instance.getString(Preferences.url);
     if (id == null || url == null) return;

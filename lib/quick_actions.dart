@@ -28,7 +28,7 @@ class _QuickActionsInitializerState extends State<QuickActionsInitializer> {
           case 'stop':
             await GeolocationService.stop();
           case 'sos':
-            await GeolocationService.tracker.requestPosition(alarm: 'sos');
+            await GeolocationService.requestPosition(alarm: 'sos');
         }
       } on PlatformException {
         // permission denied or startup error

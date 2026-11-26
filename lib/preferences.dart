@@ -21,6 +21,9 @@ class Preferences {
   static const String stopDetection = 'stop_detection';
   static const String preferPlatformProviders = 'prefer_platform_providers';
   static const String password = 'password';
+  static const String provisioningEligible = 'provisioning_eligible';
+  static const String provisionedName = 'provisioned_name';
+  static const String locationCommandsAllowed = 'location_commands_allowed';
 
   // Fork-only reliability settings. These are intentionally stored outside
   // the published traccar_client_sdk 1.0.11 Dart Config and applied through
@@ -57,6 +60,9 @@ class Preferences {
           stopDetection,
           preferPlatformProviders,
           password,
+          provisioningEligible,
+          provisionedName,
+          locationCommandsAllowed,
           adaptiveTracking,
           syncMode,
           syncBatchSize,
@@ -96,6 +102,8 @@ class Preferences {
       await instance.setBool(wakelock, false);
       await instance.setBool(buffer, true);
       await instance.setBool(stopDetection, true);
+      await instance.setBool(provisioningEligible, true);
+      await instance.setBool(locationCommandsAllowed, false);
     }
 
     // Enhanced defaults are also applied to upgrades from the upstream app.
@@ -114,6 +122,12 @@ class Preferences {
     if (instance.getInt(heartbeatMaxAge) == null) {
       await instance.setInt(heartbeatMaxAge, 300);
     }
+  }
+
+  static bool get canEnroll => instance.getBool(provisioningEligible) == true;
+
+  static Future<void> disableEnrollment() async {
+    if (canEnroll) await instance.setBool(provisioningEligible, false);
   }
 
   static Config buildConfig() {

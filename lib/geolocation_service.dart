@@ -2,6 +2,7 @@ import 'package:traccar_client_sdk/traccar_client_sdk.dart';
 
 import 'enhanced_tracking_service.dart';
 import 'tracking_watchdog.dart';
+import 'preferences.dart';
 
 class GeolocationService {
   static final tracker = TraccarClientSdk();
@@ -17,7 +18,9 @@ class GeolocationService {
   }
 
   static Future<void> start() async {
+    await Preferences.disableEnrollment();
     await tracker.start();
+    await Preferences.instance.setBool(Preferences.locationCommandsAllowed, true);
     try {
       await TrackingWatchdog.arm();
     } catch (_) {
@@ -26,7 +29,17 @@ class GeolocationService {
     }
   }
 
+  static Future<void> requestPosition({String? alarm}) async {
+    await Preferences.disableEnrollment();
+    if (alarm == null) {
+      await tracker.requestPosition();
+    } else {
+      await tracker.requestPosition(alarm: alarm);
+    }
+  }
+
   static Future<void> stop() async {
+    await Preferences.instance.setBool(Preferences.locationCommandsAllowed, false);
     await tracker.stop();
     try {
       await TrackingWatchdog.cancel();

@@ -2,12 +2,12 @@
 
 ## Current beta
 
-- Version: `10.2.0-beta.2+160`
-- Release date: 2026-11-25
+- Version: `10.2.0-beta.3+161`
+- Release date: 2026-11-26
 - Target: Android
 - Application ID: `org.traccar.client`
-- Source branch: `beta/10.2.0-beta.2`
-- GitHub tag: `v10.2.0-beta.2`
+- Source branch: `beta/10.2.0-beta.3`
+- GitHub tag: `v10.2.0-beta.3`
 - Release type: GitHub Pre-release
 
 ## ZalGps branding
@@ -38,22 +38,18 @@ The SDK fork keeps the original queue and Traccar/OsmAnd-compatible per-position
 The app repository owns both CI and beta publishing:
 
 - `.github/workflows/build.yml` runs SDK core verification, `flutter analyze`, `flutter test`, builds a debug APK, generates SHA-256, and uploads the artifact for `main`, beta branches, pull requests, and manual runs.
-- `.github/workflows/beta-release.yml` runs on `beta/**` and manual dispatch. It verifies the pinned SDK and Flutter app, builds the beta APK, generates SHA-256, uploads the CI artifact, creates/updates tag `v<beta-version>`, and publishes a GitHub Pre-release with the APK and checksum attached.
+- `.github/workflows/beta-release.yml` runs on `beta/**` and manual dispatch. It verifies the pinned SDK and Flutter app, builds the beta APK, generates SHA-256, uploads the CI artifact, creates a new tag `v<beta-version>`, and publishes a GitHub Pre-release with the APK and checksum attached.
 - `.github/workflows/release.yml` remains the production publishing workflow. Pre-release tags containing `-` are excluded from the production tag trigger so beta/RC tags cannot accidentally publish to Google Play or App Store.
 
 The beta workflow generates the final artifact metadata dynamically from the APK it just built, including workflow run ID, source commit, file size, and SHA-256. This avoids stale checksums in release notes.
 
 ## Beta signing and upgrades
 
-The automated beta artifact is currently a **debug-signed APK intended for sideload/device validation**. Android requires the same signing certificate for an in-place app update.
+Starting with beta.3, the beta workflow requires the dedicated ZalGps PKCS12 keystore through the four repository Actions secrets: ZALGPS_KEYSTORE_BASE64, ZALGPS_KEYSTORE_PASSWORD, ZALGPS_KEY_ALIAS, ZALGPS_KEY_PASSWORD. It builds a release APK, verifies its signing certificate against the configured key, and publishes only after verification succeeds. Missing secrets fail the build.
 
-Consequences:
+Keep the original keystore and credentials backed up securely outside the repository. Never commit private keys or passwords. Use the same signing key for future releases and increase the Android version code. Compare certificate SHA-256 across published releases to detect accidental key changes.
 
-- It may not install as an update over the official Traccar Client or any APK signed with a different certificate, even though the application ID remains `org.traccar.client`.
-- A long-lived beta/update channel should use a dedicated private signing keystore stored outside this public repository and injected through a protected CI secret.
-- Do not commit a release/private signing key, platform key, or keystore password to this repository.
-
-For testing where a differently signed `org.traccar.client` is already installed, uninstall the old build first unless preserving app data is required. Establish a stable private beta signing key before relying on in-place beta-to-beta upgrades.
+The earlier debug-signed beta and official Traccar builds may have a different certificate. Android does not allow in-place upgrades across different signing certificates. Back up settings and ensure queued positions are delivered before uninstalling an incompatible build. Physical-device validation is required.
 
 ## Device smoke-test checklist
 

@@ -17,6 +17,9 @@ plugins {
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file(System.getenv("ZALGPS_SIGNING_PROPERTIES") ?: "../../environment/key.properties")
+if (System.getenv("ZALGPS_SIGNING_PROPERTIES") != null) {
+    require(keystorePropertiesFile.isFile) { "Explicit ZalGps signing properties file is missing" }
+}
 if (keystorePropertiesFile.exists()) {
     FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
 }
@@ -48,6 +51,9 @@ extensions.configure<ApplicationExtension> {
                 keyPassword = keystoreProperties["keyPassword"] as String
                 storeFile = keystoreProperties["storeFile"]?.let { file(it) }
                 storePassword = keystoreProperties["storePassword"] as String
+                if (System.getenv("ZALGPS_SIGNING_PROPERTIES") != null) {
+                    storeType = "PKCS12"
+                }
             }
         }
     }

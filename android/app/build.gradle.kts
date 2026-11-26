@@ -16,9 +16,9 @@ plugins {
 }
 
 val keystoreProperties = Properties()
-val keystorePropertiesFile = rootProject.file("../../environment/key.properties")
+val keystorePropertiesFile = rootProject.file(System.getenv("ZALGPS_SIGNING_PROPERTIES") ?: "../../environment/key.properties")
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
 }
 
 extensions.configure<ApplicationExtension> {

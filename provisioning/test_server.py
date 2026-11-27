@@ -111,6 +111,7 @@ class ScopeTests(unittest.TestCase):
             self.assertEqual(err.exception.message, "traccar_token_rejected_http_400")
             req = factory.return_value.open.call_args.args[0]
             self.assertNotIn("Authorization", req.headers)
+            self.assertNotIn("Content-type", req.headers)
 
     def test_unconfigured_account(self):
         with self.assertRaises(EnrollmentError):

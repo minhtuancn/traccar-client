@@ -71,7 +71,9 @@ class Traccar:
         if not self.token:
             raise EnrollmentError(503, "enrollment_not_configured")
         session_check = path.startswith("session?")
-        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        headers = {"Accept": "application/json"}
+        if payload is not None:
+            headers["Content-Type"] = "application/json"
         if not session_check:
             headers["Authorization"] = "Bearer " + self.token
         req = urllib.request.Request(

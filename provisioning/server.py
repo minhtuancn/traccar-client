@@ -70,11 +70,14 @@ class Traccar:
     def request(self, method, path, payload=None):
         if not self.token:
             raise EnrollmentError(503, "enrollment_not_configured")
+        session_check = path.startswith("session?")
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        if not session_check:
+            headers["Authorization"] = "Bearer " + self.token
         req = urllib.request.Request(
             "http://127.0.0.1:8082/api/" + path,
             data=None if payload is None else json.dumps(payload).encode(),
-            headers={"Authorization": "Bearer " + self.token, "Content-Type": "application/json",
-                     "Accept": "application/json"},
+            headers=headers,
             method=method,
         )
         class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -85,6 +88,11 @@ class Traccar:
             opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
             with opener.open(req, timeout=6) as response:
                 return json.load(response)
+        except urllib.error.HTTPError as error:
+            # Never include the URL, response body or token in diagnostics.
+            if session_check and error.code in (400, 401, 403, 404):
+                raise EnrollmentError(503, f"traccar_token_rejected_http_{error.code}") from None
+            raise EnrollmentError(503, f"traccar_http_{error.code}") from None
         except (urllib.error.URLError, TimeoutError, ValueError):
             raise EnrollmentError(503, "traccar_unavailable") from None
 

@@ -3,7 +3,8 @@ import unittest
 from pathlib import Path
 
 from server import Enrollment, EnrollmentError, Traccar, issue, connect
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+from urllib.error import HTTPError
 
 
 class FakeTraccar:
@@ -98,6 +99,18 @@ class ScopeTests(unittest.TestCase):
         self.upstream.request.return_value = {"administrator": False, "userLimit": 0, "deviceLimit": 100}
         with self.assertRaises(EnrollmentError):
             self.upstream.verify_scope()
+
+    def test_invalid_token_http_status_is_sanitized(self):
+        upstream = Traccar("test-only-placeholder")
+        with patch("server.urllib.request.build_opener") as factory:
+            factory.return_value.open.side_effect = HTTPError(
+                "http://127.0.0.1:8082/api/session?token=test-only-placeholder", 400,
+                "Bad Request", None, None)
+            with self.assertRaises(EnrollmentError) as err:
+                upstream.verify_scope()
+            self.assertEqual(err.exception.message, "traccar_token_rejected_http_400")
+            req = factory.return_value.open.call_args.args[0]
+            self.assertNotIn("Authorization", req.headers)
 
     def test_unconfigured_account(self):
         with self.assertRaises(EnrollmentError):

@@ -45,5 +45,7 @@
   "enrollingLabel": "Đang đăng ký…",
   "enrollPendingLabel": "Chưa đăng ký bằng mã kích hoạt. Đăng ký trước khi theo dõi hoặc thêm ID này trên dashboard.",
   "enrollManualLabel": "Cấu hình hiện có/thủ công. Giữ nguyên ID này trên dashboard.",
-  "enrollCopyId": "Sao chép ID thiết bị"
+  "enrollCopyId": "Sao chép ID thiết bị",
+  "startupLoading": "Đang khởi động ZalGps…",
+  "startupFailed": "Không thể khởi động ZalGps. Hãy đóng và mở lại ứng dụng. Cấu hình và vị trí chờ gửi không bị xóa."
 }

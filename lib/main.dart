@@ -22,8 +22,57 @@ final messengerKey = GlobalKey<ScaffoldMessengerState>();
 final navigatorKey = GlobalKey<NavigatorState>();
 final mainScreenKey = GlobalKey<MainScreenState>();
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  runApp(const StartupGate());
+}
+
+class StartupGate extends StatefulWidget {
+  const StartupGate({super.key});
+
+  @override
+  State<StartupGate> createState() => _StartupGateState();
+}
+
+class _StartupGateState extends State<StartupGate> {
+  late final Future<void> _startup = _initialize();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _startup,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done && !snapshot.hasError) {
+          return const MainApp();
+        }
+        return MaterialApp(
+          title: 'ZalGps',
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            appBar: AppBar(title: const Text('ZalGps')),
+            body: Builder(builder: (context) {
+              final strings = AppLocalizations.of(context)!;
+              return Center(child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!snapshot.hasError) const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(snapshot.hasError ? strings.startupFailed : strings.startupLoading),
+                  ],
+                ),
+              ));
+            }),
+          ),
+        );
+      },
+    );
+  }
+}
+
+Future<void> _initialize() async {
   await Firebase.initializeApp();
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
   PlatformDispatcher.instance.onError = (error, stack) {
@@ -34,7 +83,6 @@ void main() async {
   await GeolocationService.init(Preferences.buildConfig());
   await PasswordService.migrate();
   await ManagedConfigService.init();
-  runApp(const MainApp());
   unawaited(PushService.init().catchError((Object error, StackTrace stack) {
     debugPrint('ZalGps notification initialization failed');
   }));

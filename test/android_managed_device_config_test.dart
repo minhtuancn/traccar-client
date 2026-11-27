@@ -12,6 +12,15 @@ void main() {
     expect(manifest, contains('android:name="org.traccar.client.MainActivity"'));
   });
 
+  test('startup displays a screen and optional push registration cannot block it', () {
+    final main = File('lib/main.dart').readAsStringSync();
+    final shortcuts = File('lib/quick_actions.dart').readAsStringSync();
+    expect(main, contains('runApp(const StartupGate())'));
+    expect(main, contains('FutureBuilder<void>'));
+    expect(main, contains('unawaited(PushService.init()'));
+    expect(shortcuts, isNot(contains('SystemNavigator.pop()')));
+  });
+
   test('Android device admin receiver is registered', () {
     final manifest = File(
       'android/app/src/main/AndroidManifest.xml',

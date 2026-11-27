@@ -59,7 +59,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   Future<void> _enrollDevice() async {
     if (enrolling || !Preferences.canEnroll || trackingEnabled) return;
     final localizations = AppLocalizations.of(context)!;
-    final controller = TextEditingController();
+    var enteredCode = "";
     final code = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -69,7 +69,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           children: [
             Text(localizations.enrollDescription),
             TextField(
-              controller: controller,
+              onChanged: (value) => enteredCode = value,
               obscureText: true,
               autocorrect: false,
               enableSuggestions: false,
@@ -83,13 +83,12 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             child: Text(localizations.cancelButton),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
+            onPressed: () => Navigator.pop(dialogContext, enteredCode.trim()),
             child: Text(localizations.enrollButton),
           ),
         ],
       ),
     );
-    controller.dispose();
     if (!mounted || code == null || code.isEmpty) return;
     setState(() => enrolling = true);
     try {

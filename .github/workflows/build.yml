@@ -21,6 +21,10 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Provisioning backend tests
+        working-directory: provisioning
+        run: python3 -m unittest -v
+
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:

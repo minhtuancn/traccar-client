@@ -16,7 +16,9 @@ class ConfigurationService {
   static Future<void> applyParameters(
     Map<String, dynamic> parameters, {
     String? url,
+    bool provisioning = false,
   }) async {
+    if (!provisioning) await Preferences.disableEnrollment();
     if (url != null) {
       await Preferences.instance.setString(Preferences.url, url);
     }

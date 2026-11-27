@@ -1,0 +1,31 @@
+[Unit]
+Description=ZalGps opt-in device enrollment API
+After=network-online.target traccar.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=zalgps-prov
+Group=zalgps-prov
+WorkingDirectory=/opt/zalgps-provisioning
+Environment=ZALGPS_BIND=10.20.10.112
+Environment=ZALGPS_PORT=8094
+Environment=ZALGPS_ALLOWED_PEERS=10.20.10.111,10.20.10.112,127.0.0.1
+Environment=PYTHONDONTWRITEBYTECODE=1
+LoadCredential=traccar-token:/etc/zalgps-provisioning/traccar-token
+ExecStart=/usr/bin/python3 /opt/zalgps-provisioning/server.py serve
+Restart=on-failure
+RestartSec=5
+UMask=0077
+StateDirectory=zalgps-provisioning
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+MemoryMax=96M
+TasksMax=24
+
+[Install]
+WantedBy=multi-user.target

@@ -35,5 +35,12 @@
   "stopAction": "Stop service",
   "sosAction": "Send SOS",
   "disclosureMessage": "This app collects location and activity data in the background and sends it to the configured server.",
-  "configurationMessage": "Apply new configuration?"
+  "configurationMessage": "Apply new configuration?",
+  "enrollButton": "Register device",
+  "enrollTitle": "Register ZalGps device",
+  "enrollDescription": "Use the activation code from your administrator. Registration does not start location tracking.",
+  "activationCodeLabel": "Activation code",
+  "enrollSuccess": "Device registered. You can now enable tracking.",
+  "enrollError": "Registration failed. Check the code and server connection.",
+  "enrollingLabel": "Registering…"
 }

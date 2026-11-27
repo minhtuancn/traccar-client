@@ -31,6 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _applyBaseConfig() async {
+    await Preferences.disableEnrollment();
     await GeolocationService.setConfig(Preferences.buildConfig());
   }
 

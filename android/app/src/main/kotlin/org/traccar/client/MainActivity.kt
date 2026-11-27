@@ -1,5 +1,6 @@
 package org.traccar.client
 
+import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -14,6 +15,17 @@ class MainActivity : FlutterActivity() {
         enhancedTrackingBridge = EnhancedTrackingBridge(
             flutterEngine.dartExecutor.binaryMessenger,
         )
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "zalgps/device_info",
+        ).setMethodCallHandler { call, result ->
+            if (call.method == "model") {
+                result.success("${Build.MANUFACTURER} ${Build.MODEL}".trim())
+            } else {
+                result.notImplemented()
+            }
+        }
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,

@@ -35,5 +35,12 @@
   "stopAction": "Dừng dịch vụ",
   "sosAction": "Gửi SOS",
   "disclosureMessage": "Ứng dụng này thu thập dữ liệu vị trí và hoạt động ở chế độ nền và gửi đến máy chủ đã cấu hình.",
-  "configurationMessage": "Áp dụng cấu hình mới?"
+  "configurationMessage": "Áp dụng cấu hình mới?",
+  "enrollButton": "Đăng ký thiết bị",
+  "enrollTitle": "Đăng ký thiết bị ZalGps",
+  "enrollDescription": "Nhập mã kích hoạt do quản trị viên cấp. Đăng ký không tự bật định vị.",
+  "activationCodeLabel": "Mã kích hoạt",
+  "enrollSuccess": "Đã đăng ký thiết bị. Bạn có thể bật theo dõi.",
+  "enrollError": "Đăng ký thất bại. Kiểm tra mã và kết nối máy chủ.",
+  "enrollingLabel": "Đang đăng ký…"
 }

@@ -10,6 +10,7 @@ import 'package:traccar_client/preferences.dart';
 import 'geolocation_service.dart';
 import 'l10n/app_localizations.dart';
 import 'settings_screen.dart';
+import 'provisioning_service.dart';
 import 'status_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -21,6 +22,7 @@ class MainScreen extends StatefulWidget {
 
 class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   bool trackingEnabled = false;
+  bool enrolling = false;
 
   @override
   void initState() {
@@ -52,6 +54,56 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   void refresh() => setState(() {});
 
+  Future<void> _enrollDevice() async {
+    if (enrolling || !Preferences.canEnroll || trackingEnabled) return;
+    final localizations = AppLocalizations.of(context)!;
+    final controller = TextEditingController();
+    final code = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(localizations.enrollTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(localizations.enrollDescription),
+            TextField(
+              controller: controller,
+              obscureText: true,
+              autocorrect: false,
+              enableSuggestions: false,
+              decoration: InputDecoration(labelText: localizations.activationCodeLabel),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(localizations.cancelButton),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
+            child: Text(localizations.enrollButton),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (!mounted || code == null || code.isEmpty) return;
+    setState(() => enrolling = true);
+    try {
+      await ProvisioningService.enroll(code);
+      messengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text(localizations.enrollSuccess)),
+      );
+    } catch (_) {
+      messengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text(localizations.enrollError)),
+      );
+    } finally {
+      if (mounted) setState(() => enrolling = false);
+    }
+  }
+
   Widget _buildTrackingCard() {
     return Card(
       child: Padding(
@@ -69,6 +121,16 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               title: Text(AppLocalizations.of(context)!.idLabel),
               subtitle: Text(Preferences.instance.getString(Preferences.id) ?? ''),
             ),
+            if (Platform.isAndroid &&
+                Preferences.instance.getString(Preferences.provisionedName) != null)
+              Text(Preferences.instance.getString(Preferences.provisionedName)!),
+            if (Platform.isAndroid && Preferences.canEnroll && !trackingEnabled)
+              FilledButton.tonal(
+                onPressed: enrolling ? null : _enrollDevice,
+                child: Text(enrolling
+                    ? AppLocalizations.of(context)!.enrollingLabel
+                    : AppLocalizations.of(context)!.enrollButton),
+              ),
             if (Platform.isAndroid) ...[
               Text(
                 AppLocalizations.of(context)!.disclosureMessage,
@@ -80,7 +142,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               contentPadding: EdgeInsets.zero,
               title: Text(AppLocalizations.of(context)!.trackingLabel),
               value: trackingEnabled,
-              onChanged: (bool value) async {
+              onChanged: enrolling ? null : (bool value) async {
                 if (await PasswordService.authenticate(context) && mounted) {
                   if (value) {
                     FirebaseCrashlytics.instance.log('tracking_toggle_start');
@@ -115,9 +177,9 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               runSpacing: 8,
               children: [
                 FilledButton.tonal(
-                  onPressed: () async {
+                  onPressed: enrolling ? null : () async {
                     try {
-                      await GeolocationService.tracker.requestPosition();
+                      await GeolocationService.requestPosition();
                     } on PlatformException {
                       // permission denied or location error
                     }
@@ -129,9 +191,9 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     backgroundColor: Theme.of(context).colorScheme.errorContainer,
                     foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
                   ),
-                  onPressed: () async {
+                  onPressed: enrolling ? null : () async {
                     try {
-                      await GeolocationService.tracker.requestPosition(alarm: 'sos');
+                      await GeolocationService.requestPosition(alarm: 'sos');
                     } on PlatformException {
                       // permission denied or location error
                     }
@@ -175,7 +237,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               runSpacing: 8,
               children: [
                 FilledButton.tonal(
-                  onPressed: () async {
+                  onPressed: enrolling ? null : () async {
                     if (await PasswordService.authenticate(context) && mounted) {
                       await Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
                       setState(() {});

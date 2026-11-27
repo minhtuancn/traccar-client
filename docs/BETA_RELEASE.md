@@ -53,6 +53,8 @@ The earlier debug-signed beta and official Traccar builds may have a different c
 
 ## Beta.4 enrollment acceptance gate
 
+Download the signed test APK from the draft release using the authenticated repository maintainer account, or from the matching Beta Release workflow artifact. Do not distribute the draft publicly before the acceptance gate passes. If the existing beta.3 installation already has a device identifier, use a separate fresh Android test installation for enrollment instead of clearing a production device's app data.
+
 - Verify HTTPS health and readiness at `https://gps-api.go7s.net/healthz` and `/readyz`.
 - Install the signed candidate on a fresh authorized Android test device; existing beta.3 device configurations are preserved and are not automatically re-enrolled.
 - On LXC112, issue a fresh one-use code with `runuser -u zalgps-prov -- python3 /opt/zalgps-provisioning/server.py issue --ttl 900`. Keep the code private.

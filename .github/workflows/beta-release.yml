@@ -62,6 +62,10 @@ jobs:
             [[ "$code" == 2 ]] || exit "$code"
           fi
 
+      - name: Provisioning backend regression tests
+        working-directory: provisioning
+        run: python3 -m unittest -v
+
       - name: Verify pinned SDK core
         working-directory: vendor/traccar-client-sdk
         run: ./gradlew :core:allTests --no-configuration-cache
@@ -123,6 +127,7 @@ jobs:
           "$apksigner" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk > "$signing_dir/verification.txt" 2>&1
           cat "$signing_dir/verification.txt"
           actual=$(python3 tool/verify_apk_signer.py "$signing_dir/verification.txt" "$expected")
+          [[ "$actual" == "1779fcc58da759bb71b1b65995039fa1cab6205361d53095005565e8dc52367f" ]] || { echo "::error::Release certificate differs from the published ZalGps beta.3 certificate"; exit 1; }
           printf '%s\n' "$actual" > signing-certificate.sha256
           echo "Verified ZalGps signing certificate SHA-256: $actual"
 
@@ -155,14 +160,20 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Create or update GitHub pre-release
+      - name: Check public enrollment readiness (diagnostic)
+        continue-on-error: true
+        run: |
+          curl --fail --silent --show-error --connect-timeout 5 --max-time 15 https://gps-api.go7s.net/healthz | python3 -c 'import json,sys; assert json.load(sys.stdin).get("status") == "ok"'
+          curl --fail --silent --show-error --connect-timeout 5 --max-time 15 https://gps-api.go7s.net/readyz | python3 -c 'import json,sys; assert json.load(sys.stdin).get("ready") is True'
+
+      - name: Create GitHub draft pre-release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
           name: ZalGps ${{ steps.version.outputs.version }}
           prerelease: true
-          draft: false
+          draft: true
           body_path: release-notes.md
           files: |
             ${{ steps.version.outputs.apk }}

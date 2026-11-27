@@ -2,12 +2,12 @@
 
 ## Current beta
 
-- Version: `10.2.0-beta.4+162`
+- Version: `10.2.0-beta.5+163`
 - Candidate date: 2026-11-27
 - Target: Android
 - Application ID: `org.traccar.client`
-- Source branch: `beta/10.2.0-beta.4`
-- GitHub tag: `v10.2.0-beta.4`
+- Source branch: `beta/10.2.0-beta.5`
+- GitHub tag: `v10.2.0-beta.5`
 - Release type: GitHub draft pre-release (pending physical-device validation)
 
 ## ZalGps branding
@@ -51,12 +51,14 @@ Keep the original keystore and credentials backed up securely outside the reposi
 
 The earlier debug-signed beta and official Traccar builds may have a different certificate. Android does not allow in-place upgrades across different signing certificates. Back up settings and ensure queued positions are delivered before uninstalling an incompatible build. Physical-device validation is required.
 
-## Beta.4 enrollment acceptance gate
+## Beta.5 enrollment acceptance gate
 
 - Verify HTTPS health and readiness at `https://gps-api.go7s.net/healthz` and `/readyz`.
-- Install the signed candidate on a fresh authorized Android test device; existing beta.3 device configurations are preserved and are not automatically re-enrolled.
+- Upgrade an existing signed beta.3/4 installation without clearing data. Confirm that the registration section is visible, the current identifier is unchanged, and tracking settings and any queued positions are preserved.
+- For an existing device, verify it is assigned to the scoped ZalGPS account in Traccar, stop tracking, and issue a bound link code using `runuser -u zalgps-prov -- python3 /opt/zalgps-provisioning/server.py issue --ttl 900 --existing-id DEVICE_ID`. Choose Link existing device, enter the code, and confirm the same device ID and display name with no duplicate created.
+- Install the signed candidate on a separate fresh authorized Android test device for new-device enrollment.
 - On LXC112, issue a fresh one-use code with `runuser -u zalgps-prov -- python3 /opt/zalgps-provisioning/server.py issue --ttl 900`. Keep the code private.
-- In ZalGps, choose Register device, enter the code and verify the displayed name and new identifier match the device in Traccar.
+- On the fresh installation, choose Register device, enter the new-device code and verify the displayed name and new identifier match the device in Traccar. Restart the app and confirm the registration status is still visible.
 - Verify registration alone does not start tracking. Explicitly enable tracking, grant the required permissions and confirm a genuine position reaches the server.
 - Confirm a second installation cannot redeem the same code. Never create fake production positions.
 - Publish the draft only after these checks pass. If enrollment fails, retain the candidate and repair the existing branch before publication.
@@ -80,7 +82,7 @@ After installation on a real Android device:
 
 For dedicated devices, Device Owner provisioning can be used to apply supported Android management policies. Device Owner improves administrative control but does not make the application invisible to Android system-management interfaces.
 
-The next UI-fix candidate restores the Activity in Recent Apps with `android:excludeFromRecents="false"`. The foreground location service remains subject to Android notification, process-management, and Force Stop behavior.
+Beta.5 restores the Activity in Recent Apps with `android:excludeFromRecents="false"`. The foreground location service remains subject to Android notification, process-management, and Force Stop behavior.
 
 ## iOS status
 

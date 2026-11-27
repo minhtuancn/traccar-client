@@ -2,6 +2,16 @@
 
 All notable changes to the ZalGps resilient-tracking fork are documented here.
 
+## 10.2.0-beta.5 — 2026-11-27
+
+- Keep the registration section visible on the Android home screen, with registration status and a copyable current identifier.
+- Preserve enrollment eligibility after unrelated settings changes or failed tracking start.
+- Add operator-issued, expiring codes bound to an existing Traccar device identifier. Linking uses a scoped read-only lookup and preserves the device ID, server settings, and queued positions.
+- Restore normal Recent Apps visibility and keep the management UI open after quick actions.
+- Show startup loading/error state and avoid blocking the UI on optional notification registration.
+- Keep the beta.3 release certificate and increment Android version code to 163.
+- Keep the release as a draft until authorized physical-device acceptance checks pass.
+
 ## 10.2.0-beta.4 — 2026-11-27
 
 - Add opt-in Android device enrollment with one-use activation codes, automatic manufacturer/model detection, Vietnamese and English UI, and a random device identifier.

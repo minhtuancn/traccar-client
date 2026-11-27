@@ -52,7 +52,9 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     });
   }
 
-  void refresh() => setState(() {});
+  void refresh() {
+    if (mounted) _refreshState();
+  }
 
   Future<void> _enrollDevice() async {
     if (enrolling || !Preferences.canEnroll || trackingEnabled) return;
@@ -121,16 +123,35 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               title: Text(AppLocalizations.of(context)!.idLabel),
               subtitle: Text(Preferences.instance.getString(Preferences.id) ?? ''),
             ),
-            if (Platform.isAndroid &&
-                Preferences.instance.getString(Preferences.provisionedName) != null)
-              Text(Preferences.instance.getString(Preferences.provisionedName)!),
-            if (Platform.isAndroid && Preferences.canEnroll && !trackingEnabled)
-              FilledButton.tonal(
-                onPressed: enrolling ? null : _enrollDevice,
-                child: Text(enrolling
-                    ? AppLocalizations.of(context)!.enrollingLabel
-                    : AppLocalizations.of(context)!.enrollButton),
+            if (Platform.isAndroid) ...[
+              Text(
+                Preferences.instance.getString(Preferences.provisionedName) ??
+                    (Preferences.canEnroll
+                        ? AppLocalizations.of(context)!.enrollPendingLabel
+                        : AppLocalizations.of(context)!.enrollManualLabel),
               ),
+              Wrap(
+                spacing: 8,
+                children: [
+                  if (Preferences.canEnroll)
+                    FilledButton.tonal(
+                      onPressed: enrolling || trackingEnabled ? null : _enrollDevice,
+                      child: Text(enrolling
+                          ? AppLocalizations.of(context)!.enrollingLabel
+                          : AppLocalizations.of(context)!.enrollButton),
+                    ),
+                  TextButton.icon(
+                    onPressed: () async {
+                      await Clipboard.setData(ClipboardData(
+                        text: Preferences.instance.getString(Preferences.id) ?? '',
+                      ));
+                    },
+                    icon: const Icon(Icons.copy),
+                    label: Text(AppLocalizations.of(context)!.enrollCopyId),
+                  ),
+                ],
+              ),
+            ],
             if (Platform.isAndroid) ...[
               Text(
                 AppLocalizations.of(context)!.disclosureMessage,

@@ -126,6 +126,14 @@ class Preferences {
 
   static bool get canEnroll => instance.getBool(provisioningEligible) == true;
 
+  static bool identityChanged({
+    required String? currentId,
+    required String? currentUrl,
+    String? nextId,
+    String? nextUrl,
+  }) => (nextId != null && nextId != currentId) ||
+      (nextUrl != null && nextUrl != currentUrl);
+
   static Future<void> disableEnrollment() async {
     if (canEnroll) await instance.setBool(provisioningEligible, false);
   }

@@ -33,9 +33,11 @@ void main() async {
   await Preferences.init();
   await GeolocationService.init(Preferences.buildConfig());
   await PasswordService.migrate();
-  await PushService.init();
   await ManagedConfigService.init();
   runApp(const MainApp());
+  unawaited(PushService.init().catchError((Object error, StackTrace stack) {
+    debugPrint('ZalGps notification initialization failed');
+  }));
 }
 
 class MainApp extends StatefulWidget {
@@ -46,7 +48,7 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
-  RateMyApp rateMyApp = RateMyApp(minDays: 0, minLaunches: 0);
+  RateMyApp rateMyApp = RateMyApp(minDays: 7, minLaunches: 10);
 
   @override
   void initState() {

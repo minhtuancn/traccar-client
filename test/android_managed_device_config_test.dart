@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('main activity is excluded from Android recents', () {
+  test('main activity remains visible in Android recents', () {
     final manifest = File(
       'android/app/src/main/AndroidManifest.xml',
     ).readAsStringSync();
 
-    expect(manifest, contains('android:excludeFromRecents="true"'));
+    expect(manifest, contains('android:excludeFromRecents="false"'));
     expect(manifest, contains('android:name="org.traccar.client.MainActivity"'));
   });
 

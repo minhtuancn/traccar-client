@@ -42,5 +42,8 @@
   "activationCodeLabel": "Activation code",
   "enrollSuccess": "Device registered. You can now enable tracking.",
   "enrollError": "Registration failed. Check the code and server connection.",
-  "enrollingLabel": "Registering…"
+  "enrollingLabel": "Registering…",
+  "enrollPendingLabel": "Not registered with an activation code. Register before tracking, or add this ID in your dashboard.",
+  "enrollManualLabel": "Existing/manual configuration. Keep this identifier in your dashboard.",
+  "enrollCopyId": "Copy device ID"
 }

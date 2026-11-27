@@ -42,5 +42,8 @@
   "activationCodeLabel": "Mã kích hoạt",
   "enrollSuccess": "Đã đăng ký thiết bị. Bạn có thể bật theo dõi.",
   "enrollError": "Đăng ký thất bại. Kiểm tra mã và kết nối máy chủ.",
-  "enrollingLabel": "Đang đăng ký…"
+  "enrollingLabel": "Đang đăng ký…",
+  "enrollPendingLabel": "Chưa đăng ký bằng mã kích hoạt. Đăng ký trước khi theo dõi hoặc thêm ID này trên dashboard.",
+  "enrollManualLabel": "Cấu hình hiện có/thủ công. Giữ nguyên ID này trên dashboard.",
+  "enrollCopyId": "Sao chép ID thiết bị"
 }

@@ -6,7 +6,7 @@ The API is independent of Traccar and uses its documented REST API. It never mod
 
 1. Run `install-lxc112.sh` as root on prod-traccar (10.20.10.112). This adds a separate service on private port 8094 and does not restart Traccar or MySQL.
 2. In Traccar, create a dedicated regular account for provisioning, with device limit 100 (adjust based on actual need), user limit 0, no administrator privileges, device editing enabled and limited commands. Generate a token in that account's Preferences. Never use an administrator token.
-3. On LXC112, as root, store the token in `/etc/zalgps-provisioning/traccar-token` using a secure interactive prompt (not a command-line argument). Keep mode 0600, then restart only `zalgps-provisioning.service`. Verify `GET http://10.20.10.112:8094/readyz` returns 200. A tokenless or invalid service stays unavailable for registration.
+3. On LXC112, run `python3 /opt/zalgps-provisioning/configure-token.py` as root and paste the scoped token into the hidden prompt. The helper checks its scope before writing the credential (mode 0600), restarts only the enrollment service, and restores the prior credential if readiness fails. Verify `GET http://10.20.10.112:8094/readyz` returns 200. A tokenless or invalid service stays unavailable for registration.
 4. In Nginx Proxy Manager, create `gps-api.go7s.net` -> HTTP `10.20.10.112:8094`, with Let's Encrypt certificate, Force SSL, no cache, no WebSockets. Test `/healthz`, `/readyz`, and an invalid enrollment request. Do not forward port 8094 directly on the WAN.
 5. Issue one activation code, locally on the server:
 

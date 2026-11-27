@@ -13,6 +13,7 @@ if [[ ! -e /etc/zalgps-provisioning/traccar-token ]]; then
   install -m 0600 /dev/null /etc/zalgps-provisioning/traccar-token
 fi
 install -m 0644 server.py /opt/zalgps-provisioning/server.py
+install -m 0644 configure-token.py /opt/zalgps-provisioning/configure-token.py
 install -m 0644 zalgps-provisioning.service /etc/systemd/system/zalgps-provisioning.service
 systemctl daemon-reload
 systemctl enable --now zalgps-provisioning.service

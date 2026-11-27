@@ -18,7 +18,15 @@ class ConfigurationService {
     String? url,
     bool provisioning = false,
   }) async {
-    if (!provisioning) await Preferences.disableEnrollment();
+    if (!provisioning && Preferences.identityChanged(
+      currentId: Preferences.instance.getString(Preferences.id),
+      currentUrl: Preferences.instance.getString(Preferences.url),
+      nextId: parameters[Preferences.id]?.toString(),
+      nextUrl: url,
+    )) {
+      await Preferences.disableEnrollment();
+      await Preferences.instance.remove(Preferences.provisionedName);
+    }
     if (url != null) {
       await Preferences.instance.setString(Preferences.url, url);
     }

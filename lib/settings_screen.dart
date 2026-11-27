@@ -31,7 +31,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _applyBaseConfig() async {
-    await Preferences.disableEnrollment();
     await GeolocationService.setConfig(Preferences.buildConfig());
   }
 
@@ -95,6 +94,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           await Preferences.instance.setInt(key, intValue);
         }
       } else {
+        if ((key == Preferences.id || key == Preferences.url) &&
+            result != initialValue) {
+          await Preferences.disableEnrollment();
+          await Preferences.instance.remove(Preferences.provisionedName);
+        }
         await Preferences.instance.setString(key, result);
       }
       await _applyBaseConfig();

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:quick_actions/quick_actions.dart';
 
 import 'geolocation_service.dart';
+import 'main.dart';
 import 'l10n/app_localizations.dart';
 
 class QuickActionsInitializer extends StatefulWidget {
@@ -34,8 +35,7 @@ class _QuickActionsInitializerState extends State<QuickActionsInitializer> {
         // permission denied or startup error
       }
       if (mounted) {
-        FirebaseCrashlytics.instance.log('quick_action_exit');
-        SystemNavigator.pop();
+        mainScreenKey.currentState?.refresh();
       }
     });
   }

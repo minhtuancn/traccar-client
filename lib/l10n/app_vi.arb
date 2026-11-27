@@ -42,5 +42,16 @@
   "activationCodeLabel": "Mã kích hoạt",
   "enrollSuccess": "Đã đăng ký thiết bị. Bạn có thể bật theo dõi.",
   "enrollError": "Đăng ký thất bại. Kiểm tra mã và kết nối máy chủ.",
-  "enrollingLabel": "Đang đăng ký…"
+  "enrollingLabel": "Đang đăng ký…",
+  "enrollPendingLabel": "Chưa đăng ký bằng mã kích hoạt. Đăng ký trước khi theo dõi hoặc thêm ID này trên dashboard.",
+  "enrollManualLabel": "Cấu hình hiện có/thủ công. Giữ nguyên ID này trên dashboard.",
+  "enrollCopyId": "Sao chép ID thiết bị",
+  "startupLoading": "Đang khởi động ZalGps…",
+  "startupFailed": "Không thể khởi động ZalGps. Hãy đóng và mở lại ứng dụng. Cấu hình và vị trí chờ gửi không bị xóa.",
+  "enrollLinkExisting": "Liên kết thiết bị hiện có",
+  "enrollLinkDescription": "Dùng mã do quản trị viên cấp riêng cho đúng ID này. Giữ nguyên ID, máy chủ và vị trí đang chờ gửi.",
+  "enrollNewDescription": "Chỉ dùng mã đăng ký mới nếu thiết bị này chưa được thêm trên dashboard. Thao tác tạo một ID mới và không tự bật theo dõi.",
+  "enrollConfirmed": "Đã xác nhận đăng ký",
+  "enrollStopTracking": "Tắt theo dõi trước khi đăng ký hoặc liên kết thiết bị.",
+  "enrollServerMismatch": "Chỉ liên kết với máy chủ GPS ZalGps. Không tự đổi máy chủ đang dùng."
 }

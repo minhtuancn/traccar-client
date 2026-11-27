@@ -32,14 +32,19 @@ class ProvisioningService {
   }
 
   // Never accept an arbitrary server URL or an arbitrary existing device ID.
-  static Map<String, dynamic> validateResponse(Object? value) {
+  static Map<String, dynamic> validateResponse(
+    Object? value, {
+    String? expectedExistingId,
+  }) {
     if (value is! Map<String, dynamic>) {
       throw const FormatException('Invalid enrollment response');
     }
     final id = value['deviceId'];
     final name = value['name'];
     if (id is! String ||
-        !RegExp(r'^zg-[a-f0-9]{32}$').hasMatch(id) ||
+        (expectedExistingId == null
+            ? !RegExp(r'^zg-[a-f0-9]{32}$').hasMatch(id)
+            : id != expectedExistingId) ||
         name is! String ||
         name.isEmpty ||
         name.length > 100 ||
@@ -49,9 +54,14 @@ class ProvisioningService {
     return <String, dynamic>{'id': id, 'name': name};
   }
 
-  static Future<String> enroll(String code) async {
+  static Future<String> enroll(String code, {bool linkExisting = false}) async {
+    final currentId = Preferences.instance.getString(Preferences.id);
+    final currentUrl = Preferences.instance.getString(Preferences.url);
+    final existingId = linkExisting ? currentId : null;
     if (!Platform.isAndroid ||
-        !Preferences.canEnroll ||
+        (linkExisting
+            ? existingId == null || !RegExp(r'^[A-Za-z0-9_.:-]{1,128}$').hasMatch(existingId) || currentUrl != gpsUrl
+            : !Preferences.canEnroll) ||
         await GeolocationService.tracker.isTracking()) {
       throw StateError('Enrollment is only available before manual tracking');
     }
@@ -68,6 +78,7 @@ class ProvisioningService {
         'activationCode': code,
         'installationId': await _installationId(),
         'model': model,
+        if (linkExisting) 'existingDeviceId': existingId,
       }));
       final response = await request.close().timeout(const Duration(seconds: 15));
       if (response.statusCode != HttpStatus.ok) {
@@ -78,17 +89,24 @@ class ProvisioningService {
         bytes.addAll(chunk);
         if (bytes.length > 8192) throw const FormatException('Response too large');
       }
-      final registration = validateResponse(jsonDecode(utf8.decode(bytes)));
-      if (!Preferences.canEnroll || await GeolocationService.tracker.isTracking()) {
+      final registration = validateResponse(
+        jsonDecode(utf8.decode(bytes)), expectedExistingId: existingId,
+      );
+      if ((!linkExisting && !Preferences.canEnroll) ||
+          Preferences.instance.getString(Preferences.id) != currentId ||
+          Preferences.instance.getString(Preferences.url) != currentUrl ||
+          await GeolocationService.tracker.isTracking()) {
         throw StateError('Tracking configuration changed during enrollment');
       }
       // The locally reviewed defaults are already set for fresh installations.
       // Do not apply arbitrary remote settings or start location tracking here.
-      await ConfigurationService.applyParameters(
-        {Preferences.id: registration['id']},
-        url: gpsUrl,
-        provisioning: true,
-      );
+      if (!linkExisting) {
+        await ConfigurationService.applyParameters(
+          {Preferences.id: registration['id']},
+          url: gpsUrl,
+          provisioning: true,
+        );
+      }
       final name = registration['name'] as String;
       await Preferences.instance.setString(Preferences.provisionedName, name);
       await Preferences.disableEnrollment();

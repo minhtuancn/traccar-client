@@ -5,7 +5,7 @@ This fork supports two Android deployment modes:
 1. **Standard application mode.** The Traccar SDK runs location tracking as a foreground location service and restores tracking after reboot or app update when tracking was previously enabled.
 2. **Managed-device mode.** Provision the app as Device Owner on a dedicated device to use Android-supported management privileges intended for company-owned or purpose-built devices.
 
-Managed-device mode does not hide the process from Android system management. The Activity can be excluded from Recent Apps, while Android may still show an active foreground service and its required notification/indicators.
+Managed-device mode does not hide the process from Android system management. The Activity remains visible in Recent Apps and Android shows active foreground services and required notification/indicators.
 
 For the full enhanced SDK architecture, Adaptive Profiles and Smart Sync settings, see [`ENHANCED_TRACKING.md`](ENHANCED_TRACKING.md). The current Android validation build is `10.2.0-beta.1+159`; see [`BETA_RELEASE.md`](BETA_RELEASE.md).
 
@@ -97,7 +97,7 @@ The watchdog is designed for service/process death, memory pressure, reboot, pac
 
 ## Recent Apps and system visibility
 
-`MainActivity` is marked `android:excludeFromRecents="true"`. This removes the UI task from the Recent Apps overview; it does not conceal the Android process or foreground location service from system administration, Active Apps, security or privacy surfaces.
+`MainActivity` is marked `android:excludeFromRecents="false"` so the user can reopen the UI from Recent Apps. Android foreground-service notifications and privacy surfaces remain visible.
 
 Android-required foreground-location notifications/indicators remain visible.
 

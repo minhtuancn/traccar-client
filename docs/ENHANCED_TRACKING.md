@@ -185,7 +185,7 @@ For ordinary phones, Android foreground-service and background-location restrict
 
 The app includes Device Admin/Device Owner building blocks, but installing the APK does **not** automatically make it Device Owner. Device Owner provisioning is a separate Android management operation.
 
-The app may be excluded from Recent Apps, but the fork intentionally does not attempt to hide a foreground location service from Android Active Apps, process management or security surfaces. Android-required location/foreground-service indicators remain visible.
+The app remains visible in Recent Apps, and the fork intentionally does not attempt to hide a foreground location service from Android Active Apps, process management or security surfaces. Android-required location/foreground-service indicators remain visible.
 
 ## Clone and build
 

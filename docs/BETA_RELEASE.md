@@ -80,7 +80,7 @@ After installation on a real Android device:
 
 For dedicated devices, Device Owner provisioning can be used to apply supported Android management policies. Device Owner improves administrative control but does not make the application invisible to Android system-management interfaces.
 
-`android:excludeFromRecents="true"` only removes the Activity from Recent Apps. The foreground location service remains subject to Android notification, process-management, and Force Stop behavior.
+The next UI-fix candidate restores the Activity in Recent Apps with `android:excludeFromRecents="false"`. The foreground location service remains subject to Android notification, process-management, and Force Stop behavior.
 
 ## iOS status
 

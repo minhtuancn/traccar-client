@@ -18,8 +18,8 @@ class GeolocationService {
   }
 
   static Future<void> start() async {
-    await Preferences.disableEnrollment();
     await tracker.start();
+    await Preferences.disableEnrollment();
     await Preferences.instance.setBool(Preferences.locationCommandsAllowed, true);
     try {
       await TrackingWatchdog.arm();
@@ -30,12 +30,12 @@ class GeolocationService {
   }
 
   static Future<void> requestPosition({String? alarm}) async {
-    await Preferences.disableEnrollment();
     if (alarm == null) {
       await tracker.requestPosition();
     } else {
       await tracker.requestPosition(alarm: alarm);
     }
+    await Preferences.disableEnrollment();
   }
 
   static Future<void> stop() async {

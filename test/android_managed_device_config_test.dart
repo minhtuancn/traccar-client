@@ -3,13 +3,22 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('main activity is excluded from Android recents', () {
+  test('main activity remains visible in Android recents', () {
     final manifest = File(
       'android/app/src/main/AndroidManifest.xml',
     ).readAsStringSync();
 
-    expect(manifest, contains('android:excludeFromRecents="true"'));
+    expect(manifest, contains('android:excludeFromRecents="false"'));
     expect(manifest, contains('android:name="org.traccar.client.MainActivity"'));
+  });
+
+  test('startup displays a screen and optional push registration cannot block it', () {
+    final main = File('lib/main.dart').readAsStringSync();
+    final shortcuts = File('lib/quick_actions.dart').readAsStringSync();
+    expect(main, contains('runApp(const StartupGate())'));
+    expect(main, contains('FutureBuilder<void>'));
+    expect(main, contains('unawaited(PushService.init()'));
+    expect(shortcuts, isNot(contains('SystemNavigator.pop()')));
   });
 
   test('Android device admin receiver is registered', () {

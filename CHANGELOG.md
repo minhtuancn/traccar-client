@@ -2,6 +2,14 @@
 
 All notable changes to the ZalGps resilient-tracking fork are documented here.
 
+## 10.2.0-beta.4 — 2026-11-27
+
+- Add opt-in Android device enrollment with one-use activation codes, automatic manufacturer/model detection, Vietnamese and English UI, and a random device identifier.
+- Keep existing device identifiers and configuration on upgrades; enrollment is offered on a fresh, not yet manually configured installation.
+- Add isolated provisioning API with expiring activation codes, idempotent registration and scoped Traccar token checks.
+- Keep tracking disabled until the user explicitly starts it; enrollment does not grant location permission.
+- Sign with the same certificate as beta.3. Stage the APK as a draft pre-release until authorized physical-device enrollment and GPS upload have been verified.
+
 ## 10.2.0-beta.3 — 2026-11-26
 
 - Configure persistent ZalGps release signing via GitHub Actions Secrets.

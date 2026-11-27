@@ -21,6 +21,14 @@ void main() {
     expect(result['name'], valid['name']);
   });
 
+  test('link response must preserve the exact current identifier', () {
+    final linked = {...valid, 'deviceId': '12345678'};
+    expect(ProvisioningService.validateResponse(linked, expectedExistingId: '12345678')['id'], '12345678');
+    expect(() => ProvisioningService.validateResponse(linked, expectedExistingId: '87654321'), throwsFormatException);
+    expect(() => ProvisioningService.validateResponse(valid, expectedExistingId: '12345678'), throwsFormatException);
+    expect(() => ProvisioningService.validateResponse(linked), throwsFormatException);
+  });
+
   test('rejects foreign servers and existing arbitrary IDs', () {
     expect(
       () => ProvisioningService.validateResponse({...valid, 'serverUrl': 'https://example.org/'}),

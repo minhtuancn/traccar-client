@@ -13,6 +13,11 @@ class FakeTraccar:
         self.fail = False
         self.devices = {}
 
+    def find_existing_device(self, unique_id):
+        if unique_id not in self.devices:
+            raise EnrollmentError(403, "existing_device_unavailable")
+        return self.devices[unique_id], "Existing vehicle"
+
     def ensure_device(self, unique_id, name):
         self.calls.append(unique_id)
         self.devices.setdefault(unique_id, 1)
@@ -64,6 +69,45 @@ class EnrollmentTests(unittest.TestCase):
         with self.assertRaises(EnrollmentError) as err:
             self.service.enroll({**self.body, "activationCode": "x" * 43})
         self.assertEqual(err.exception.status, 403)
+
+    def test_link_existing_does_not_create_or_change_id(self):
+        self.upstream.devices["12345678"] = 42
+        code = issue(self.db, 900, "12345678")
+        body = {**self.body, "activationCode": code, "existingDeviceId": "12345678"}
+        one = self.service.enroll(body)
+        self.assertEqual(one, self.service.enroll(body))
+        self.assertEqual(one["deviceId"], "12345678")
+        self.assertEqual(one["name"], "Existing vehicle")
+        self.assertEqual(self.upstream.calls, [])
+        self.assertEqual(self.upstream.devices, {"12345678": 42})
+        with self.assertRaises(EnrollmentError) as err:
+            self.service.enroll({**body, "installationId": "b" * 32})
+        self.assertEqual(err.exception.status, 409)
+
+    def test_link_code_bound_to_exact_id_and_mode(self):
+        code = issue(self.db, 900, "12345678")
+        for body in ({**self.body, "activationCode": code},
+                     {**self.body, "activationCode": code, "existingDeviceId": "87654321"},
+                     {**self.body, "existingDeviceId": "12345678"}):
+            with self.assertRaises(EnrollmentError) as err:
+                self.service.enroll(body)
+            self.assertEqual(err.exception.status, 403)
+        self.assertEqual(self.upstream.calls, [])
+
+    def test_link_missing_device_never_creates_it(self):
+        code = issue(self.db, 900, "12345678")
+        with self.assertRaises(EnrollmentError):
+            self.service.enroll({**self.body, "activationCode": code, "existingDeviceId": "12345678"})
+        self.assertEqual(self.upstream.devices, {})
+
+    def test_reissue_invalidates_unused_link_code(self):
+        old = issue(self.db, 900, "12345678")
+        new = issue(self.db, 900, "12345678")
+        self.upstream.devices["12345678"] = 42
+        body = {**self.body, "existingDeviceId": "12345678"}
+        with self.assertRaises(EnrollmentError):
+            self.service.enroll({**body, "activationCode": old})
+        self.assertEqual(self.service.enroll({**body, "activationCode": new})["deviceId"], "12345678")
 
     def test_expired_code(self):
         db = connect(self.db)
@@ -119,6 +163,11 @@ class ScopeTests(unittest.TestCase):
             self.upstream.verify_scope()
         self.assertIn("deviceLimit=-1 (required 1..1000)", err.exception.message)
         self.assertIn("userLimit=5 (required 0)", err.exception.message)
+
+    def test_existing_device_lookup_only_uses_scoped_get(self):
+        self.upstream.request.side_effect = [self.account, [{"id": 42, "uniqueId": "12345678", "name": "Vehicle", "disabled": False}]]
+        self.assertEqual(self.upstream.find_existing_device("12345678"), (42, "Vehicle"))
+        self.assertEqual(self.upstream.request.call_args.args, ("GET", "devices?uniqueId=12345678"))
 
     def test_unconfigured_account(self):
         with self.assertRaises(EnrollmentError):

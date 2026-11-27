@@ -56,18 +56,19 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     if (mounted) _refreshState();
   }
 
-  Future<void> _enrollDevice() async {
-    if (enrolling || !Preferences.canEnroll || trackingEnabled) return;
+  Future<void> _enrollDevice({bool linkExisting = false}) async {
+    if (enrolling || trackingEnabled || (!linkExisting && !Preferences.canEnroll)) return;
+    if (!await PasswordService.authenticate(context) || !mounted) return;
     final localizations = AppLocalizations.of(context)!;
     var enteredCode = "";
     final code = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(localizations.enrollTitle),
+        title: Text(linkExisting ? localizations.enrollLinkExisting : localizations.enrollTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(localizations.enrollDescription),
+            Text(linkExisting ? localizations.enrollLinkDescription : localizations.enrollNewDescription),
             TextField(
               onChanged: (value) => enteredCode = value,
               obscureText: true,
@@ -92,7 +93,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     if (!mounted || code == null || code.isEmpty) return;
     setState(() => enrolling = true);
     try {
-      await ProvisioningService.enroll(code);
+      await ProvisioningService.enroll(code, linkExisting: linkExisting);
       messengerKey.currentState?.showSnackBar(
         SnackBar(content: Text(localizations.enrollSuccess)),
       );
@@ -103,6 +104,57 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     } finally {
       if (mounted) setState(() => enrolling = false);
     }
+  }
+
+  Widget _buildEnrollmentCard() {
+    final strings = AppLocalizations.of(context)!;
+    final registeredName = Preferences.instance.getString(Preferences.provisionedName);
+    final deviceId = Preferences.instance.getString(Preferences.id) ?? '';
+    final canLink = Preferences.instance.getString(Preferences.url) == ProvisioningService.gpsUrl;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(strings.enrollTitle, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(registeredName != null
+                ? strings.enrollConfirmed
+                : (Preferences.canEnroll ? strings.enrollPendingLabel : strings.enrollManualLabel)),
+            if (registeredName != null) Text(registeredName),
+            SelectableText(deviceId),
+            if (trackingEnabled && registeredName == null)
+              Text(strings.enrollStopTracking),
+            if (!canLink && registeredName == null)
+              Text(strings.enrollServerMismatch),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (registeredName == null)
+                  FilledButton.tonal(
+                    onPressed: enrolling || trackingEnabled || !canLink
+                        ? null : () => _enrollDevice(linkExisting: true),
+                    child: Text(strings.enrollLinkExisting),
+                  ),
+                if (registeredName == null && Preferences.canEnroll)
+                  FilledButton.tonal(
+                    onPressed: enrolling || trackingEnabled
+                        ? null : () => _enrollDevice(),
+                    child: Text(enrolling ? strings.enrollingLabel : strings.enrollButton),
+                  ),
+                TextButton.icon(
+                  onPressed: () => Clipboard.setData(ClipboardData(text: deviceId)),
+                  icon: const Icon(Icons.copy),
+                  label: Text(strings.enrollCopyId),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildTrackingCard() {
@@ -122,35 +174,6 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               title: Text(AppLocalizations.of(context)!.idLabel),
               subtitle: Text(Preferences.instance.getString(Preferences.id) ?? ''),
             ),
-            if (Platform.isAndroid) ...[
-              Text(
-                Preferences.instance.getString(Preferences.provisionedName) ??
-                    (Preferences.canEnroll
-                        ? AppLocalizations.of(context)!.enrollPendingLabel
-                        : AppLocalizations.of(context)!.enrollManualLabel),
-              ),
-              Wrap(
-                spacing: 8,
-                children: [
-                  if (Preferences.canEnroll)
-                    FilledButton.tonal(
-                      onPressed: enrolling || trackingEnabled ? null : _enrollDevice,
-                      child: Text(enrolling
-                          ? AppLocalizations.of(context)!.enrollingLabel
-                          : AppLocalizations.of(context)!.enrollButton),
-                    ),
-                  TextButton.icon(
-                    onPressed: () async {
-                      await Clipboard.setData(ClipboardData(
-                        text: Preferences.instance.getString(Preferences.id) ?? '',
-                      ));
-                    },
-                    icon: const Icon(Icons.copy),
-                    label: Text(AppLocalizations.of(context)!.enrollCopyId),
-                  ),
-                ],
-              ),
-            ],
             if (Platform.isAndroid) ...[
               Text(
                 AppLocalizations.of(context)!.disclosureMessage,
@@ -283,6 +306,10 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            if (Platform.isAndroid) ...[
+              _buildEnrollmentCard(),
+              const SizedBox(height: 16),
+            ],
             _buildTrackingCard(),
             const SizedBox(height: 16),
             _buildSettingsCard(),

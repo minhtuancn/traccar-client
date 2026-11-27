@@ -47,5 +47,11 @@
   "enrollManualLabel": "Existing/manual configuration. Keep this identifier in your dashboard.",
   "enrollCopyId": "Copy device ID",
   "startupLoading": "Starting ZalGps…",
-  "startupFailed": "ZalGps could not start. Close and reopen the app. Settings and queued positions have not been cleared."
+  "startupFailed": "ZalGps could not start. Close and reopen the app. Settings and queued positions have not been cleared.",
+  "enrollLinkExisting": "Link existing device",
+  "enrollLinkDescription": "Use an administrator-issued code for this exact device ID. Your device ID, server and queued positions stay unchanged.",
+  "enrollNewDescription": "Use a new-device activation code only if this installation is not already registered on the dashboard. This creates a new device ID. Registration does not start tracking.",
+  "enrollConfirmed": "Registration confirmed",
+  "enrollStopTracking": "Stop tracking before registering or linking this device.",
+  "enrollServerMismatch": "Linking is available for the ZalGps GPS server only. Your current server is not changed."
 }

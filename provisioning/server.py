@@ -21,6 +21,7 @@ GPS_URL = "https://gps.go7s.net/"
 DB_PATH = os.getenv("ZALGPS_DB", "/var/lib/zalgps-provisioning/enrollment.sqlite3")
 CODE_RE = re.compile(r"[A-Za-z0-9_-]{43}")
 INSTALL_RE = re.compile(r"[a-f0-9]{32}")
+EXISTING_ID_RE = re.compile(r"[A-Za-z0-9_.:-]{1,128}")
 DEFAULTS = {
     "accuracy": "high", "interval": 30, "distance": 25, "heartbeat": 300,
     "buffer": True, "stop_detection": True, "wakelock": False,
@@ -46,15 +47,27 @@ def connect(path):
         unique_id TEXT NOT NULL UNIQUE, installation_hash TEXT,
         device_id INTEGER, device_name TEXT
     )""")
+    db.execute("""CREATE TABLE IF NOT EXISTS enrollment_links (
+        code_hash TEXT PRIMARY KEY, expires INTEGER NOT NULL,
+        unique_id TEXT NOT NULL, installation_hash TEXT,
+        device_id INTEGER, device_name TEXT
+    )""")
     db.commit()
     return db
 
 
-def issue(path, ttl_seconds):
+def issue(path, ttl_seconds, existing_id=None):
     if not 60 <= ttl_seconds <= 86400:
         raise ValueError("TTL must be between 60 and 86400 seconds")
+    if existing_id is not None and not EXISTING_ID_RE.fullmatch(existing_id):
+        raise ValueError("Invalid existing device identifier")
     code = secrets.token_urlsafe(32)
     with closing(connect(path)) as db, db:
+        if existing_id is not None:
+            db.execute("DELETE FROM enrollment_links WHERE unique_id=? AND installation_hash IS NULL", (existing_id,))
+            db.execute("INSERT INTO enrollment_links(code_hash,expires,unique_id) VALUES(?,?,?)",
+                       (digest(code), int(time.time()) + ttl_seconds, existing_id))
+            return code
         db.execute(
             "INSERT INTO enrollment(code_hash,expires,unique_id) VALUES(?,?,?)",
             (digest(code), int(time.time()) + ttl_seconds, "zg-" + secrets.token_hex(16)),
@@ -121,6 +134,19 @@ class Traccar:
             raise EnrollmentError(503, "invalid_service_account_scope: " + "; ".join(failures))
         self._verified_at = time.monotonic()
 
+    def find_existing_device(self, unique_id):
+        self.verify_scope()
+        devices = self.request("GET", "devices?" + urllib.parse.urlencode({"uniqueId": unique_id}))
+        if not isinstance(devices, list):
+            raise EnrollmentError(503, "invalid_traccar_response")
+        matches = [d for d in devices if isinstance(d, dict) and d.get("uniqueId") == unique_id]
+        if len(matches) != 1 or matches[0].get("disabled") is not False:
+            raise EnrollmentError(403, "existing_device_unavailable")
+        device = matches[0]
+        if type(device.get("id")) is not int or not isinstance(device.get("name"), str):
+            raise EnrollmentError(503, "invalid_traccar_response")
+        return device["id"], device["name"][:100] or unique_id[:100]
+
     def ensure_device(self, unique_id, name):
         self.verify_scope()
         existing = self.request("GET", "devices?" + urllib.parse.urlencode({"uniqueId": unique_id}))
@@ -146,6 +172,10 @@ class Enrollment:
         code = body.get("activationCode")
         installation = body.get("installationId")
         model = body.get("model", "Android")
+        existing_id = body.get("existingDeviceId")
+        if "existingDeviceId" in body and (
+                not isinstance(existing_id, str) or not EXISTING_ID_RE.fullmatch(existing_id)):
+            raise EnrollmentError(400, "invalid_existing_device_id")
         if not isinstance(code, str) or not CODE_RE.fullmatch(code):
             raise EnrollmentError(400, "invalid_activation_code")
         if not isinstance(installation, str) or not INSTALL_RE.fullmatch(installation):
@@ -155,6 +185,8 @@ class Enrollment:
         model = " ".join(re.sub(r"[^\w .-]", "", model).split())[:60] or "Android"
         installation_hash = digest(installation)
         code_hash = digest(code)
+        if existing_id is not None:
+            return self.link_existing(code_hash, installation_hash, existing_id)
         # One worker at a time. Commit the claim before contacting Traccar so
         # a retry after an upstream timeout uses the same unique ID.
         with self.lock, closing(connect(self.path)) as db:
@@ -177,6 +209,27 @@ class Enrollment:
                 with db:
                     db.execute("UPDATE enrollment SET device_id=? WHERE code_hash=?", (device_id, code_hash))
             return {"deviceId": unique_id, "name": name, "serverUrl": GPS_URL, "config": DEFAULTS}
+
+
+    def link_existing(self, code_hash, installation_hash, existing_id):
+        # Only an operator-issued code explicitly bound to this ID can link it.
+        # No new device, name update, or assignment is ever performed here.
+        with self.lock, closing(connect(self.path)) as db:
+            with db:
+                db.execute("BEGIN IMMEDIATE")
+                row = db.execute("SELECT * FROM enrollment_links WHERE code_hash=?", (code_hash,)).fetchone()
+                if not row or row["expires"] < int(time.time()) or row["unique_id"] != existing_id:
+                    raise EnrollmentError(403, "activation_invalid_or_expired")
+                if row["installation_hash"] and not hmac.compare_digest(row["installation_hash"], installation_hash):
+                    raise EnrollmentError(409, "activation_already_used")
+                db.execute("UPDATE enrollment_links SET installation_hash=? WHERE code_hash=?", (installation_hash, code_hash))
+            # Recheck scope and existence even on retry, never create on absence.
+            device_id, name = self.upstream.find_existing_device(existing_id)
+            if row["device_id"] is not None and row["device_id"] != device_id:
+                raise EnrollmentError(403, "existing_device_unavailable")
+            with db:
+                db.execute("UPDATE enrollment_links SET device_id=?,device_name=? WHERE code_hash=?", (device_id, name, code_hash))
+            return {"deviceId": existing_id, "name": name, "serverUrl": GPS_URL, "config": DEFAULTS}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -284,9 +337,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("action", choices=["serve", "issue"])
     parser.add_argument("--ttl", type=int, default=900)
+    parser.add_argument("--existing-id", help="Link an existing device without creating or renaming it")
     args = parser.parse_args()
     if args.action == "issue":
-        print(issue(DB_PATH, args.ttl))
+        print(issue(DB_PATH, args.ttl, args.existing_id))
         return
     token_file = Path(os.getenv("CREDENTIALS_DIRECTORY", "/nonexistent")) / "traccar-token"
     token = token_file.read_text().strip() if token_file.is_file() else ""

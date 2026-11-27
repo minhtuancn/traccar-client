@@ -106,12 +106,19 @@ class Traccar:
         # Traccar session identity uses the documented token query parameter.
         # This request is strictly loopback; never send it through the public proxy.
         user = self.request("GET", "session?" + urllib.parse.urlencode({"token": self.token}))
-        if (not isinstance(user, dict) or user.get("administrator") is not False
-                or user.get("userLimit") != 0 or user.get("readonly") is not False
-                or user.get("deviceReadonly") is not False or user.get("disabled") is not False
-                or type(user.get("deviceLimit")) is not int
-                or not 1 <= user["deviceLimit"] <= 1000):
-            raise EnrollmentError(503, "invalid_service_account_scope")
+        if not isinstance(user, dict):
+            raise EnrollmentError(503, "invalid_service_account_scope: invalid_session_response")
+        failures = []
+        for field in ("administrator", "readonly", "deviceReadonly", "disabled"):
+            if user.get(field) is not False:
+                failures.append(field + "=" + ("true" if user.get(field) is True else "missing_or_invalid") + " (required false)")
+        for field, low, high in (("userLimit", 0, 0), ("deviceLimit", 1, 1000)):
+            value = user.get(field)
+            if type(value) is not int or not low <= value <= high:
+                actual = str(value) if type(value) is int else "missing_or_invalid"
+                failures.append(field + "=" + actual + " (required " + (str(low) if low == high else f"{low}..{high}") + ")")
+        if failures:
+            raise EnrollmentError(503, "invalid_service_account_scope: " + "; ".join(failures))
         self._verified_at = time.monotonic()
 
     def ensure_device(self, unique_id, name):
@@ -225,7 +232,7 @@ class Handler(BaseHTTPRequestHandler):
             result = self.server.enrollment.enroll(body)
             self.reply(200, result)
         except EnrollmentError as exc:
-            self.reply(exc.status, {"error": exc.message})
+            self.reply(exc.status, {"error": exc.message.split(":", 1)[0]})
         except (ValueError, UnicodeError):
             self.reply(400, {"error": "invalid_request"})
         except (sqlite3.Error, OSError):

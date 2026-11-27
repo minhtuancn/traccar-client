@@ -113,6 +113,13 @@ class ScopeTests(unittest.TestCase):
             self.assertNotIn("Authorization", req.headers)
             self.assertNotIn("Content-type", req.headers)
 
+    def test_scope_diagnostic_identifies_fields(self):
+        self.upstream.request.return_value = {**self.account, "deviceLimit": -1, "userLimit": 5}
+        with self.assertRaises(EnrollmentError) as err:
+            self.upstream.verify_scope()
+        self.assertIn("deviceLimit=-1 (required 1..1000)", err.exception.message)
+        self.assertIn("userLimit=5 (required 0)", err.exception.message)
+
     def test_unconfigured_account(self):
         with self.assertRaises(EnrollmentError):
             Traccar("").verify_scope()

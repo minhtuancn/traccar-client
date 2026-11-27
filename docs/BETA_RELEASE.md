@@ -2,13 +2,13 @@
 
 ## Current beta
 
-- Version: `10.2.0-beta.3+161`
-- Release date: 2026-11-26
+- Version: `10.2.0-beta.4+162`
+- Candidate date: 2026-11-27
 - Target: Android
 - Application ID: `org.traccar.client`
-- Source branch: `beta/10.2.0-beta.3`
-- GitHub tag: `v10.2.0-beta.3`
-- Release type: GitHub Pre-release
+- Source branch: `beta/10.2.0-beta.4`
+- GitHub tag: `v10.2.0-beta.4`
+- Release type: GitHub draft pre-release (pending physical-device validation)
 
 ## ZalGps branding
 
@@ -38,18 +38,28 @@ The SDK fork keeps the original queue and Traccar/OsmAnd-compatible per-position
 The app repository owns both CI and beta publishing:
 
 - `.github/workflows/build.yml` runs SDK core verification, `flutter analyze`, `flutter test`, builds a debug APK, generates SHA-256, and uploads the artifact for `main`, beta branches, pull requests, and manual runs.
-- `.github/workflows/beta-release.yml` runs on `beta/**` and manual dispatch. It verifies the pinned SDK and Flutter app, builds the beta APK, generates SHA-256, uploads the CI artifact, creates a new tag `v<beta-version>`, and publishes a GitHub Pre-release with the APK and checksum attached.
+- `.github/workflows/beta-release.yml` runs on `beta/**` and manual dispatch. It verifies the pinned SDK and Flutter app, builds the beta APK, generates SHA-256, uploads the CI artifact, stages a GitHub draft pre-release with the APK and checksum attached. Publish the draft only after the smoke tests below pass.
 - `.github/workflows/release.yml` remains the production publishing workflow. Pre-release tags containing `-` are excluded from the production tag trigger so beta/RC tags cannot accidentally publish to Google Play or App Store.
 
 The beta workflow generates the final artifact metadata dynamically from the APK it just built, including workflow run ID, source commit, file size, and SHA-256. This avoids stale checksums in release notes.
 
 ## Beta signing and upgrades
 
-Starting with beta.3, the beta workflow requires the dedicated ZalGps PKCS12 keystore through the four repository Actions secrets: ZALGPS_KEYSTORE_BASE64, ZALGPS_KEYSTORE_PASSWORD, ZALGPS_KEY_ALIAS, ZALGPS_KEY_PASSWORD. It builds a release APK, verifies its signing certificate against the configured key, and publishes only after verification succeeds. Missing secrets fail the build.
+Starting with beta.3, the beta workflow requires the dedicated ZalGps PKCS12 keystore through the four repository Actions secrets: ZALGPS_KEYSTORE_BASE64, ZALGPS_KEYSTORE_PASSWORD, ZALGPS_KEY_ALIAS, ZALGPS_KEY_PASSWORD. It builds a release APK, verifies its signing certificate against the configured key, and stages a draft only after verification succeeds. The certificate must also match the public beta.3 certificate. Missing secrets fail the build.
 
 Keep the original keystore and credentials backed up securely outside the repository. Never commit private keys or passwords. Use the same signing key for future releases and increase the Android version code. Compare certificate SHA-256 across published releases to detect accidental key changes.
 
 The earlier debug-signed beta and official Traccar builds may have a different certificate. Android does not allow in-place upgrades across different signing certificates. Back up settings and ensure queued positions are delivered before uninstalling an incompatible build. Physical-device validation is required.
+
+## Beta.4 enrollment acceptance gate
+
+- Verify HTTPS health and readiness at `https://gps-api.go7s.net/healthz` and `/readyz`.
+- Install the signed candidate on a fresh authorized Android test device; existing beta.3 device configurations are preserved and are not automatically re-enrolled.
+- On LXC112, issue a fresh one-use code with `runuser -u zalgps-prov -- python3 /opt/zalgps-provisioning/server.py issue --ttl 900`. Keep the code private.
+- In ZalGps, choose Register device, enter the code and verify the displayed name and new identifier match the device in Traccar.
+- Verify registration alone does not start tracking. Explicitly enable tracking, grant the required permissions and confirm a genuine position reaches the server.
+- Confirm a second installation cannot redeem the same code. Never create fake production positions.
+- Publish the draft only after these checks pass. If enrollment fails, retain the candidate and repair the existing branch before publication.
 
 ## Device smoke-test checklist
 

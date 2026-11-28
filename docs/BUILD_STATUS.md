@@ -114,3 +114,7 @@ Automated build/test gates are complete. Physical-device validation remains requ
 ### P0 follow-up — 2026-11-28
 
 Operator reports active use on two physical Samsung Android phones and successful access to history after troubleshooting report permissions. The exact APK versions, upgrade preservation, tracking duration and Stop/reboot behavior remain unverified. A read-only provisioning check confirms one completed new-device API enrollment, zero completed existing-device links, SQLite integrity OK, all three services active and public readiness true. No personal identifiers or location history were collected. P0 remains open pending the remaining device acceptance checks.
+
+### P0 follow-up — mixed-version field use
+
+Operator confirms one Samsung phone runs beta.4 and one runs beta.5; history is viewable for both in Traccar Manager. This establishes operator-reported real-device GPS/history functionality for beta.5 alongside beta.4. It does not yet establish an in-place beta.4 to beta.5 upgrade, preserved identity/configuration/queue, successful existing-ID linking, explicit Stop/reboot behavior or long-running battery performance. No personal device identifiers or locations recorded.

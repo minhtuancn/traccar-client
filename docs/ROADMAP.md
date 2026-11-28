@@ -15,7 +15,7 @@ Updated 2026-11-28. This is the current client/provisioning roadmap; the older r
 
 P0 recheck: full APK download checksum verified; latest main CI green; live HTTPS health/readiness 200; malformed enrollment rejected.
 
-P0 follow-up: operator reports successful use on two physical Samsung phones; backend independently confirms one completed new-device enrollment. Existing-device linking still has zero completed records. Exact APK versions, upgrade preservation and remaining tracking acceptance checks are pending. Manual dashboard registration is not proof of API success. The operator must test on a physical phone. Do not fabricate GPS or create test devices in production without explicit authorization.
+P0 follow-up: operator reports successful use on two physical Samsung phones; backend independently confirms one completed new-device enrollment. Existing-device linking still has zero completed records. Operator confirms one phone on beta.4 and one on beta.5, with history viewable for both. Real-device beta.5 GPS/history functionality is operator-confirmed; upgrade preservation, existing-ID linking and remaining tracking acceptance checks are pending. Manual dashboard registration is not proof of API success. The operator must test on a physical phone. Do not fabricate GPS or create test devices in production without explicit authorization.
 
 ## P1 — in-app update check
 

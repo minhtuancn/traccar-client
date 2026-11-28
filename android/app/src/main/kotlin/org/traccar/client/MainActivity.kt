@@ -7,6 +7,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private var enhancedTrackingBridge: EnhancedTrackingBridge? = null
+    private var updateInstaller: UpdateInstaller? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -26,6 +27,14 @@ class MainActivity : FlutterActivity() {
                 result.notImplemented()
             }
         }
+
+        updateInstaller?.dispose()
+        val installer = UpdateInstaller(this)
+        updateInstaller = installer
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "zalgps/update_installer",
+        ).setMethodCallHandler(installer::handle)
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -61,6 +70,8 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        updateInstaller?.dispose()
+        updateInstaller = null
         enhancedTrackingBridge?.dispose()
         enhancedTrackingBridge = null
         super.onDestroy()

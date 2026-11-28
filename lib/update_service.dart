@@ -6,9 +6,10 @@ import 'package:flutter/services.dart';
 
 import 'update_manifest.dart';
 
-/// Explicit user-initiated check only. No installation or tracking changes.
+/// Explicit user-initiated updates only; Android owns installation confirmation.
 class UpdateService {
   static const _channel = MethodChannel('zalgps/update_info');
+  static const _installer = MethodChannel('zalgps/update_installer');
   static final _releases = Uri.https('api.github.com',
       '/repos/${UpdateManifest.repository}/releases', {'per_page': '20'});
 
@@ -17,6 +18,16 @@ class UpdateService {
     if (build == null || build <= 0) throw StateError('Unknown installed build');
     return build;
   }
+
+  static Future<void> prepare(UpdateManifest manifest) =>
+      _installer.invokeMethod<void>('prepare', {
+        'version': manifest.version, 'versionCode': manifest.build,
+        'size': manifest.size, 'sha256': manifest.sha256,
+      });
+
+  static Future<void> installPrepared() => _installer.invokeMethod<void>('installPrepared');
+
+  static Future<void> discard() => _installer.invokeMethod<void>('discard');
 
   static bool trustedAssetRedirect(Uri uri) =>
       uri.scheme == 'https' && uri.userInfo.isEmpty && !uri.hasPort &&

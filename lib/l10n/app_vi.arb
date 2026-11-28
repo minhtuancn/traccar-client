@@ -58,6 +58,11 @@
   "updateChecking": "Đang kiểm tra…",
   "updateNone": "Chưa tìm thấy bản beta mới đã công bố có hỗ trợ cập nhật.",
   "updateAvailable": "Có bản beta mới",
-  "updateManualNotice": "Chức năng này chưa tải hoặc cài đặt APK. Hãy sử dụng bản phát hành được phép cho tới khi nghiệm thu cập nhật trong ứng dụng.",
-  "updateFailed": "Không kiểm tra được cập nhật. Hãy thử lại sau."
+  "updateManualNotice": "Chỉ tải từ bản phát hành chính thức. Ứng dụng sẽ hỏi lại trước khi mở trình cài đặt Android.",
+  "updateFailed": "Không kiểm tra được cập nhật. Hãy thử lại sau.",
+  "updateDownload": "Tải và xác minh",
+  "updateVerified": "APK đã qua xác minh",
+  "updateConfirmInstall": "Android sẽ hiển thị xác nhận cài đặt. Chỉ tiếp tục nếu bạn muốn nâng cấp.",
+  "updateInstall": "Mở trình cài đặt Android",
+  "updatePermission": "Cho phép ZalGps cài ứng dụng không rõ nguồn trong cài đặt Android rồi thử lại."
 }

@@ -58,6 +58,11 @@
   "updateChecking": "Checking…",
   "updateNone": "No newer supported published beta found.",
   "updateAvailable": "New beta available",
-  "updateManualNotice": "This check does not download or install anything. Use an authorized release until in-app installation is verified.",
-  "updateFailed": "Could not check updates. Try again later."
+  "updateManualNotice": "Download only from the official release. You will be asked again before Android installation.",
+  "updateFailed": "Could not check updates. Try again later.",
+  "updateDownload": "Download and verify",
+  "updateVerified": "APK verification passed",
+  "updateConfirmInstall": "Android will show its installation confirmation. Continue only if you want to update.",
+  "updateInstall": "Open Android installer",
+  "updatePermission": "Allow ZalGps to install unknown apps in Android settings, then try again."
 }

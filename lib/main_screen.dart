@@ -267,18 +267,48 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       final build = await UpdateService.currentBuild();
       final manifest = await UpdateService.check(build);
       if (!mounted) return;
-      final message = manifest == null
-          ? strings.updateNone
-          : '${strings.updateAvailable}: ${manifest.version} (+${manifest.build})';
-      await showDialog<void>(
+      final download = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: Text(strings.updateCheck),
-          content: Text('$message\n\n${strings.updateManualNotice}'),
+          content: Text(manifest == null
+              ? strings.updateNone
+              : '${strings.updateAvailable}: ${manifest.version} (+${manifest.build})\n\n${strings.updateManualNotice}'),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('OK')),
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('OK')),
+            if (manifest != null)
+              FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(strings.updateDownload)),
           ],
         ),
+      );
+      if (!mounted || download != true || manifest == null) return;
+      await UpdateService.prepare(manifest);
+      if (!mounted) {
+        await UpdateService.discard();
+        return;
+      }
+      final install = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(strings.updateVerified),
+          content: Text(strings.updateConfirmInstall),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(strings.cancelButton)),
+            FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(strings.updateInstall)),
+          ],
+        ),
+      );
+      if (mounted && install == true) {
+        // Allow dialog dismissal to settle before launching the OS installer.
+        await WidgetsBinding.instance.endOfFrame;
+        if (mounted) await UpdateService.installPrepared();
+      } else {
+        await UpdateService.discard();
+      }
+    } on PlatformException catch (error) {
+      if (mounted) messengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text(error.code == 'install_permission'
+            ? strings.updatePermission : strings.updateFailed)),
       );
     } catch (_) {
       if (mounted) messengerKey.currentState?.showSnackBar(

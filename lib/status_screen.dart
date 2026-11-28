@@ -9,6 +9,7 @@ import 'package:traccar_client_sdk/traccar_client_sdk.dart';
 import 'enhanced_tracking_service.dart';
 import 'geolocation_service.dart';
 import 'l10n/app_localizations.dart';
+import 'status_refresh_gate.dart';
 
 class StatusScreen extends StatefulWidget {
   const StatusScreen({super.key});
@@ -24,6 +25,8 @@ class _StatusScreenState extends State<StatusScreen> {
   List<LogEntry> _logs = const [];
   EnhancedTrackingStatus? _enhancedStatus;
   Timer? _refreshTimer;
+  final _refreshGate = StatusRefreshGate();
+  bool _refreshFailed = false;
 
   @override
   void initState() {
@@ -39,17 +42,25 @@ class _StatusScreenState extends State<StatusScreen> {
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _refreshGate.dispose();
     super.dispose();
   }
 
   Future<void> _refresh() async {
-    final logs = await GeolocationService.tracker.getLogs();
-    final status = await EnhancedTrackingService.getStatus();
-    if (!mounted) return;
-    setState(() {
-      _logs = logs.reversed.toList(growable: false);
-      _enhancedStatus = status;
-    });
+    try {
+      await _refreshGate.run(() async {
+        final logs = await GeolocationService.tracker.getLogs();
+        final status = await EnhancedTrackingService.getStatus();
+        if (!mounted) return;
+        setState(() {
+          _logs = logs.reversed.toList(growable: false);
+          _enhancedStatus = status;
+          _refreshFailed = false;
+        });
+      });
+    } catch (_) {
+      if (mounted) setState(() => _refreshFailed = true);
+    }
   }
 
   Future<void> _shareLogs() async {
@@ -146,6 +157,11 @@ class _StatusScreenState extends State<StatusScreen> {
       ),
       body: Column(
         children: [
+          if (_refreshFailed)
+            const ListTile(
+              leading: Icon(Icons.info_outline),
+              title: Text('Status refresh failed. Displayed data may be stale.'),
+            ),
           _buildEnhancedStatus(),
           Expanded(
             child: ListView.builder(

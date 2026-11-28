@@ -53,5 +53,16 @@
   "enrollNewDescription": "Chỉ dùng mã đăng ký mới nếu thiết bị này chưa được thêm trên dashboard. Thao tác tạo một ID mới và không tự bật theo dõi.",
   "enrollConfirmed": "Đã xác nhận đăng ký",
   "enrollStopTracking": "Tắt theo dõi trước khi đăng ký hoặc liên kết thiết bị.",
-  "enrollServerMismatch": "Chỉ liên kết với máy chủ GPS ZalGps. Không tự đổi máy chủ đang dùng."
+  "enrollServerMismatch": "Chỉ liên kết với máy chủ GPS ZalGps. Không tự đổi máy chủ đang dùng.",
+  "updateCheck": "Kiểm tra cập nhật",
+  "updateChecking": "Đang kiểm tra…",
+  "updateNone": "Chưa tìm thấy bản beta mới đã công bố có hỗ trợ cập nhật.",
+  "updateAvailable": "Có bản beta mới",
+  "updateManualNotice": "Chỉ tải từ bản phát hành chính thức. Ứng dụng sẽ hỏi lại trước khi mở trình cài đặt Android.",
+  "updateFailed": "Không kiểm tra được cập nhật. Hãy thử lại sau.",
+  "updateDownload": "Tải và xác minh",
+  "updateVerified": "APK đã qua xác minh",
+  "updateConfirmInstall": "Android sẽ hiển thị xác nhận cài đặt. Chỉ tiếp tục nếu bạn muốn nâng cấp.",
+  "updateInstall": "Mở trình cài đặt Android",
+  "updatePermission": "Cho phép ZalGps cài ứng dụng không rõ nguồn trong cài đặt Android rồi thử lại."
 }

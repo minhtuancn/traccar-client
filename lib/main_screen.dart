@@ -12,6 +12,7 @@ import 'l10n/app_localizations.dart';
 import 'settings_screen.dart';
 import 'provisioning_service.dart';
 import 'status_screen.dart';
+import 'update_service.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -23,6 +24,7 @@ class MainScreen extends StatefulWidget {
 class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   bool trackingEnabled = false;
   bool enrolling = false;
+  bool _checkingUpdate = false;
 
   @override
   void initState() {
@@ -257,6 +259,66 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     );
   }
 
+  Future<void> _checkUpdate() async {
+    if (_checkingUpdate) return;
+    final strings = AppLocalizations.of(context)!;
+    setState(() => _checkingUpdate = true);
+    try {
+      final build = await UpdateService.currentBuild();
+      final manifest = await UpdateService.check(build);
+      if (!mounted) return;
+      final download = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(strings.updateCheck),
+          content: Text(manifest == null
+              ? strings.updateNone
+              : '${strings.updateAvailable}: ${manifest.version} (+${manifest.build})\n\n${strings.updateManualNotice}'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('OK')),
+            if (manifest != null)
+              FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(strings.updateDownload)),
+          ],
+        ),
+      );
+      if (!mounted || download != true || manifest == null) return;
+      await UpdateService.prepare(manifest);
+      if (!mounted) {
+        await UpdateService.discard();
+        return;
+      }
+      final install = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(strings.updateVerified),
+          content: Text(strings.updateConfirmInstall),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(strings.cancelButton)),
+            FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(strings.updateInstall)),
+          ],
+        ),
+      );
+      if (mounted && install == true) {
+        // Allow dialog dismissal to settle before launching the OS installer.
+        await WidgetsBinding.instance.endOfFrame;
+        if (mounted) await UpdateService.installPrepared();
+      } else {
+        await UpdateService.discard();
+      }
+    } on PlatformException catch (error) {
+      if (mounted) messengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text(error.code == 'install_permission'
+            ? strings.updatePermission : strings.updateFailed)),
+      );
+    } catch (_) {
+      if (mounted) messengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text(strings.updateFailed)),
+      );
+    } finally {
+      if (mounted) setState(() => _checkingUpdate = false);
+    }
+  }
+
   Widget _buildSettingsCard() {
     return Card(
       child: Padding(
@@ -288,6 +350,14 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   },
                   child: Text(AppLocalizations.of(context)!.settingsButton),
                 ),
+                if (Platform.isAndroid)
+                  TextButton.icon(
+                    onPressed: _checkingUpdate ? null : _checkUpdate,
+                    icon: const Icon(Icons.system_update),
+                    label: Text(_checkingUpdate
+                        ? AppLocalizations.of(context)!.updateChecking
+                        : AppLocalizations.of(context)!.updateCheck),
+                  ),
               ],
             ),
           ]

@@ -1,6 +1,12 @@
-# ZalGps — ordered roadmap and handoff
+# ZalGps — parallel roadmap and handoff
 
 Updated 2026-11-28. This is the current client/provisioning roadmap; the older resilient tracking plan records historical SDK work. See [BUILD_STATUS](BUILD_STATUS.md) for verified evidence and [CHANGELOG](../CHANGELOG.md) for implemented features.
+
+P0–P3 development may proceed in parallel by operator direction. Release and deployment gates remain independent; no unverified runtime changes to production.
+
+## Approved cross-repository architecture (2026-11-28)
+
+The product owner approved a single Go V2 management API and Next.js dashboard in [ZalGPS-server](https://github.com/vietkeynet/ZalGPS-server). Read the authoritative [control-plane ADR](https://github.com/vietkeynet/ZalGPS-server/blob/0e633016a/v2/docs/client-control-plane.md), [V2 TODO](https://github.com/vietkeynet/ZalGPS-server/blob/feat/zalgps-v2-go/v2/TODO.md) and CTRL-01–CTRL-05. Server owns enrollment, config profiles/revisions/ack, release catalog, diagnostics and management UI; Client owns local consent, independent validation, GPS, queue, APK verification and normal OS installer. Existing Python/SQLite production provisioning remains unchanged; its isolated P2 prototype is a contract/test reference, not a competing permanent API. Coordinate schema and synthetic contract fixtures with CTRL-01 before adding any live config endpoint or automatic apply. Preserve beta.5 and existing IDs/history until explicit migration approval. P0/P1/P3 can continue independently. Latest Client installer CI at 25db87e failed and must be resolved before merge or beta.6 build; do not treat earlier green checks as latest acceptance.
 
 ## P0 — close beta.5 acceptance (current)
 
@@ -24,7 +30,7 @@ Automated acceptance: PASS at runtime candidate and main CI; release-integrity c
 
 ## P1 — in-app update check
 
-Status: DESIGN ONLY, not implemented. Depends on P0 for first published compatible beta. Implement in a separate reviewed increment after acceptance.
+Status: implemented in the parallel development branch: manifest generation, manual published-beta check, version-code comparison, bounded download, native archive identity/signature and SHA-256 checks, explicit download/install confirmations, and normal Android installer handoff. CI and physical Android installer acceptance are pending. No background install; Android unknown-app install permission must be granted by the user. Public rollout remains gated by acceptance.
 
 - Use published, non-draft releases from the fixed official fork repository; opt-in beta channel, compare Android version codes rather than timestamps or lexicographic versions.
 - Use HTTPS, reject untrusted URLs/redirects, cap response/download size, handle network errors and no update without blocking startup.
@@ -34,7 +40,7 @@ Status: DESIGN ONLY, not implemented. Depends on P0 for first published compatib
 
 ## P2 — remote configuration
 
-Status: DESIGN ONLY, not implemented. Requires stable enrollment/link lifecycle and explicit device authentication. Do not treat a public device identifier as an authentication secret.
+Status: independent server/client validation and isolated staging SQLite prototype implemented. The prototype tests per-installation random credentials, hashed storage, consent, revocation, ordered revisions and isolation. No production authentication integration, network endpoint, remote application or production deployment yet. Requires reviewed enrollment/link lifecycle and explicit informed consent. Do not treat a public device identifier as an authentication secret.
 
 - Design a scoped authenticated per-installation channel and explicit administrator/device assignment with revocation, audit, and retry/rollback.
 - Define versioned allowlisted tracking parameters with type/range validation, stale/replayed revision rejection, local safe defaults, and previous known-good config.
@@ -44,6 +50,8 @@ Status: DESIGN ONLY, not implemented. Requires stable enrollment/link lifecycle 
 
 ## P3 — reliability and battery acceptance
 
+Initial diagnostic refresh coalescing and stale-data warning implemented; see [field acceptance](FIELD_ACCEPTANCE.md). Real-device measurements and remaining gates are pending.
+
 - Long-running stationary and motion tests, charging/Battery Saver profiles, Doze and OEM restrictions.
 - Offline/Batch/Instant queue delivery, stale heartbeat protection, ordinary process/reboot recovery and explicit Stop persistence.
 - Measure battery use, sync latency and queue integrity on actual target phones; document device model and OS without personal identifiers.
@@ -51,4 +59,4 @@ Status: DESIGN ONLY, not implemented. Requires stable enrollment/link lifecycle 
 
 ## Agent workflow
 
-Read current source and CI evidence before making changes. Finish existing PRs sequentially and avoid speculative PRs. Work on shared storage, keep credentials and device data outside public repositories. Use immutable SDK pins, test exact SHAs, keep signed draft releases until physical acceptance. Never change unrelated services, bypass Android permissions, restart explicitly stopped tracking, or report unverified steps as passed.
+Read current source and CI evidence before making changes. Develop independent P0–P3 changes in parallel worktrees, consolidate compatible changes into a reviewed PR, and avoid speculative PRs. Work on shared storage, keep credentials and device data outside public repositories. Use immutable SDK pins, test exact SHAs, keep signed draft releases until physical acceptance. Never change unrelated services, bypass Android permissions, restart explicitly stopped tracking, or report unverified steps as passed.

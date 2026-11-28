@@ -26,7 +26,7 @@ Automated acceptance: PASS at runtime candidate and main CI; release-integrity c
 
 ## P1 — in-app update check
 
-Status: initial strict manifest parser and version-code tests implemented in the parallel development branch. Release metadata generation, network check, UI, APK download/actual package and signature verification, and Android installer remain pending. Public rollout remains gated by acceptance.
+Status: implemented in the parallel development branch: manifest generation, manual published-beta check, version-code comparison, bounded download, native archive identity/signature and SHA-256 checks, explicit download/install confirmations, and normal Android installer handoff. CI and physical Android installer acceptance are pending. No background install; Android unknown-app install permission must be granted by the user. Public rollout remains gated by acceptance.
 
 - Use published, non-draft releases from the fixed official fork repository; opt-in beta channel, compare Android version codes rather than timestamps or lexicographic versions.
 - Use HTTPS, reject untrusted URLs/redirects, cap response/download size, handle network errors and no update without blocking startup.
@@ -36,7 +36,7 @@ Status: initial strict manifest parser and version-code tests implemented in the
 
 ## P2 — remote configuration
 
-Status: initial pure versioned configuration policy and tests implemented. No network endpoint, device authentication, application of remote configuration or production deployment yet. Requires stable enrollment/link lifecycle, explicit informed consent and device authentication. Do not treat a public device identifier as an authentication secret.
+Status: independent server/client validation and isolated staging SQLite prototype implemented. The prototype tests per-installation random credentials, hashed storage, consent, revocation, ordered revisions and isolation. No production authentication integration, network endpoint, remote application or production deployment yet. Requires reviewed enrollment/link lifecycle and explicit informed consent. Do not treat a public device identifier as an authentication secret.
 
 - Design a scoped authenticated per-installation channel and explicit administrator/device assignment with revocation, audit, and retry/rollback.
 - Define versioned allowlisted tracking parameters with type/range validation, stale/replayed revision rejection, local safe defaults, and previous known-good config.

@@ -62,6 +62,18 @@ jobs:
             [[ "$code" == 2 ]] || exit "$code"
           fi
 
+      - name: Reject an existing draft or release for this version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          tags=$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq '.[].tag_name')
+          if grep -Fxq "$RELEASE_TAG" <<< "$tags"; then
+            echo "::error::Release $RELEASE_TAG already exists (including drafts). Preserve the tested artifact; investigate partial drafts manually."
+            exit 1
+          fi
+
       - name: Provisioning backend regression tests
         working-directory: provisioning
         run: python3 -m unittest -v
@@ -85,8 +97,8 @@ jobs:
       - name: Flutter tests
         run: flutter test
 
-      - name: Test APK signer report parser
-        run: python3 -m unittest discover -s tool -p test_verify_apk_signer.py -v
+      - name: Test release integrity tools
+        run: python3 -m unittest discover -s tool -p "test_verify*.py" -v
 
       - name: Build signed beta APK
         shell: bash
@@ -166,15 +178,32 @@ jobs:
           curl --fail --silent --show-error --connect-timeout 5 --max-time 15 https://gps-api.go7s.net/healthz | python3 -c 'import json,sys; assert json.load(sys.stdin).get("status") == "ok"'
           curl --fail --silent --show-error --connect-timeout 5 --max-time 15 https://gps-api.go7s.net/readyz | python3 -c 'import json,sys; assert json.load(sys.stdin).get("ready") is True'
 
-      - name: Create GitHub draft pre-release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          target_commitish: ${{ github.sha }}
-          name: ZalGps ${{ steps.version.outputs.version }}
-          prerelease: true
-          draft: true
-          body_path: release-notes.md
-          files: |
-            ${{ steps.version.outputs.apk }}
-            ${{ steps.version.outputs.apk }}.sha256
+      - name: Create GitHub draft pre-release (never update an existing draft)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+          APK: ${{ steps.version.outputs.apk }}
+        run: |
+          set -euo pipefail
+          tags=$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq '.[].tag_name')
+          if grep -Fxq "$RELEASE_TAG" <<< "$tags"; then
+            echo "::error::Release already exists; refusing to replace its assets."
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" "$APK" "$APK.sha256" \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "ZalGps $VERSION" --notes-file release-notes.md --draft --prerelease
+
+      - name: Verify staged draft metadata and asset digests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --slurp |
+            jq --arg tag "$RELEASE_TAG" '[.[][] | select(.tag_name == $tag)] | if length == 1 then .[0] else error("Expected exactly one release") end' > staged-release.json
+          jq -e '.draft == true and .prerelease == true' staged-release.json >/dev/null
+          python3 tool/verify_release_metadata.py staged-release.json . \
+            --version "$VERSION" --commit "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID"

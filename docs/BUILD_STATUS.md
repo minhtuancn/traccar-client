@@ -122,3 +122,7 @@ Operator confirms one Samsung phone runs beta.4 and one runs beta.5; history is 
 ### P0 follow-up — isolated HTTP acceptance
 
 Added `provisioning/test_http.py`: six integration tests using the real HTTP handler on loopback, a temporary SQLite database and a fake Traccar upstream. All 23 provisioning tests passed locally (17 previous + 6 HTTP). Coverage includes restart-safe retries for new and linked devices, no duplicate creation, wrong-ID and wrong-installation rejection, expired codes, upstream failure and readiness. No production records, credentials or devices were used; the signed beta.5 runtime remains unchanged. Physical-device upgrade, link and Stop/reboot/queue acceptance remain open.
+
+### P0 release-integrity tooling
+
+Added read-only release verification and five regression tests (nine total including signer tests). Executed against the downloaded beta.5 APK, checksum and actual GitHub API release metadata: PASS. Added future-release draft collision guard and metadata verification to main CI; the existing beta.5 branch/artifact is unchanged. CI for the workflow changes must be checked separately.

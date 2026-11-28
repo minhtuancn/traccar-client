@@ -25,6 +25,9 @@ jobs:
         working-directory: provisioning
         run: python3 -m unittest -v
 
+      - name: Test release integrity tools
+        run: python3 -m unittest discover -s tool -p "test_verify*.py" -v
+
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:

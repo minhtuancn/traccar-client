@@ -91,3 +91,7 @@ Beta.5 restores the Activity in Recent Apps with `android:excludeFromRecents="fa
 ## iOS status
 
 The SDK fork contains cross-platform implementation work, including iOS-side profile and sync behavior, but this Flutter client currently consumes the enhanced native source fork only on Android. A forked XCFramework/SPM distribution path is still required before declaring the iOS client part of this beta.
+
+## Release integrity guard (main, for subsequent candidates)
+
+The workflow now rejects an existing draft or published release for the same version and creates a new draft instead of updating assets in place. It validates staged metadata and asset digests against the exact locally built APK, commit and run. If a failed run leaves a partial draft, inspect it manually; do not rerun over a candidate already under device test. The beta.5 draft remains unchanged.

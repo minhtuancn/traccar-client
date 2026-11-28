@@ -19,6 +19,8 @@ P0 recheck: full APK download checksum verified; latest main CI green; live HTTP
 
 P0 follow-up: operator reports successful use on two physical Samsung phones; backend independently confirms one completed new-device enrollment. Existing-device linking still has zero completed records. Operator confirms one phone on beta.4 and one on beta.5, with history viewable for both. Real-device beta.5 GPS/history functionality is operator-confirmed; upgrade preservation, existing-ID linking and remaining tracking acceptance checks are pending. Manual dashboard registration is not proof of API success. The operator must test on a physical phone. Do not fabricate GPS or create test devices in production without explicit authorization.
 
+Automated acceptance: PASS at runtime candidate and main CI; release-integrity checks passed with real artifact and mocked draft creation. Physical-device acceptance remains the release gate. No new signed build is needed solely for documentation or test-only changes.
+
 ## P1 — in-app update check
 
 Status: DESIGN ONLY, not implemented. Depends on P0 for first published compatible beta. Implement in a separate reviewed increment after acceptance.

@@ -110,3 +110,7 @@ Automated build/test gates are complete. Physical-device validation remains requ
 - prolonged Offline/Batch/Instant queue behavior and retry/backoff;
 - queue depth and last-success telemetry matching actual delivery behavior;
 - target OEM battery-management/Doze behavior.
+
+### P0 follow-up — 2026-11-28
+
+Operator reports active use on two physical Samsung Android phones and successful access to history after troubleshooting report permissions. The exact APK versions, upgrade preservation, tracking duration and Stop/reboot behavior remain unverified. A read-only provisioning check confirms one completed new-device API enrollment, zero completed existing-device links, SQLite integrity OK, all three services active and public readiness true. No personal identifiers or location history were collected. P0 remains open pending the remaining device acceptance checks.

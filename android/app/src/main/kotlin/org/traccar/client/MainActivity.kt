@@ -29,6 +29,21 @@ class MainActivity : FlutterActivity() {
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
+            "zalgps/update_info",
+        ).setMethodCallHandler { call, result ->
+            if (call.method == "versionCode") {
+                @Suppress("DEPRECATION")
+                val info = packageManager.getPackageInfo(packageName, 0)
+                @Suppress("DEPRECATION")
+                val code = if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
+                result.success(code)
+            } else {
+                result.notImplemented()
+            }
+        }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
             WATCHDOG_CHANNEL,
         ).setMethodCallHandler { call, result ->
             when (call.method) {

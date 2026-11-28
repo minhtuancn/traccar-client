@@ -53,5 +53,11 @@
   "enrollNewDescription": "Use a new-device activation code only if this installation is not already registered on the dashboard. This creates a new device ID. Registration does not start tracking.",
   "enrollConfirmed": "Registration confirmed",
   "enrollStopTracking": "Stop tracking before registering or linking this device.",
-  "enrollServerMismatch": "Linking is available for the ZalGps GPS server only. Your current server is not changed."
+  "enrollServerMismatch": "Linking is available for the ZalGps GPS server only. Your current server is not changed.",
+  "updateCheck": "Check for updates",
+  "updateChecking": "Checking…",
+  "updateNone": "No newer supported published beta found.",
+  "updateAvailable": "New beta available",
+  "updateManualNotice": "This check does not download or install anything. Use an authorized release until in-app installation is verified.",
+  "updateFailed": "Could not check updates. Try again later."
 }

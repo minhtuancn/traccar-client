@@ -1,6 +1,6 @@
 # Resilient Android Tracking — Execution Status
 
-**Release status:** feature implementation has been merged into `main` in both `minhtuancn/traccar-client` and `minhtuancn/traccar-client-sdk`. Android beta `10.2.0-beta.1+159` is the current validation release. Automated SDK/client verification is complete; physical-device reliability validation remains open.
+**Release status:** feature implementation has been merged into `main` in both `minhtuancn/traccar-client` and `minhtuancn/traccar-client-sdk`. Signed Android beta `10.2.0-beta.5+163` is the current validation candidate. See [current build evidence](../../BUILD_STATUS.md) and [roadmap](../../ROADMAP.md). Automated SDK/client verification is complete; physical-device reliability validation remains open.
 
 **Goal:** Make the Android Traccar Client fork survive ordinary service/process death, produce trustworthy stationary heartbeats, adapt tracking cadence to device state, retain positions through network loss, and expose enough telemetry to diagnose delivery health without breaking Traccar protocol compatibility.
 

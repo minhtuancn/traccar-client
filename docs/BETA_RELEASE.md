@@ -10,6 +10,10 @@
 - GitHub tag: `v10.2.0-beta.5`
 - Release type: GitHub draft pre-release (pending physical-device validation)
 
+## Verified artifact
+
+See [build evidence](BUILD_STATUS.md). Beta.5 is signed and available as a draft to authorized maintainers. Install the release APK, not the debug artifact; verify the checksum before installation. Keep beta.5 in draft until both registration paths and genuine GPS delivery are tested. See [Vietnamese installation guide](HUONG_DAN_ANDROID.md).
+
 ## ZalGps branding
 
 - User-facing app name: **ZalGps**.
@@ -41,7 +45,7 @@ The app repository owns both CI and beta publishing:
 - `.github/workflows/beta-release.yml` runs on `beta/**` and manual dispatch. It verifies the pinned SDK and Flutter app, builds the beta APK, generates SHA-256, uploads the CI artifact, stages a GitHub draft pre-release with the APK and checksum attached. Publish the draft only after the smoke tests below pass.
 - `.github/workflows/release.yml` remains the production publishing workflow. Pre-release tags containing `-` are excluded from the production tag trigger so beta/RC tags cannot accidentally publish to Google Play or App Store.
 
-The beta workflow generates the final artifact metadata dynamically from the APK it just built, including workflow run ID, source commit, file size, and SHA-256. This avoids stale checksums in release notes.
+The beta workflow generates the final artifact metadata dynamically from the APK it just built, including workflow run ID, source commit, file size, and SHA-256. Cross-check the release body, checksum asset and GitHub asset digest before promotion; duplicate draft builds can otherwise leave inconsistent metadata.
 
 ## Beta signing and upgrades
 

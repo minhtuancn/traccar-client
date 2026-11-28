@@ -2,14 +2,31 @@
 
 This file tracks verification evidence for the resilient Android tracking fork.
 
-## Current beta
+## Current beta — verified 2026-11-28
 
-- Version: `10.2.0-beta.1+159`
-- Target: Android
-- Beta branch: `beta/10.2.0-beta.1`
-- GitHub tag: `v10.2.0-beta.1`
-- GitHub Pre-release: published in `minhtuancn/traccar-client`
-- Feature stacks: merged to `main` in both the client and SDK repositories
+| Item | Evidence | Status |
+| --- | --- | --- |
+| Candidate | 10.2.0-beta.5+163; beta/10.2.0-beta.5 | VERIFIED |
+| APK source commit | 62c6a691a593404cfa2e122c1c07c1be1c2371f3 | VERIFIED |
+| Pinned SDK | 528bb32a22e2fbc067bb7b91c9cc8a18dbebf423 | VERIFIED |
+| Signed beta CI | [46005439328](https://github.com/minhtuancn/traccar-client/actions/runs/46005439328) | PASS |
+| Android build | [46005439408](https://github.com/minhtuancn/traccar-client/actions/runs/46005439408) | PASS |
+| Main Flutter Analyze | [46005439339](https://github.com/minhtuancn/traccar-client/actions/runs/46005439339) | PASS |
+| Registration UI fix | [PR #6](https://github.com/minhtuancn/traccar-client/pull/6) merged | VERIFIED |
+| Backend tests | 17/17 | PASS |
+| Production provisioning | HTTPS readiness true; Traccar, MySQL and provisioning services active; SQLite quick_check ok | VERIFIED |
+| New enrollment and existing-device linking on physical phone | No completed records in provisioning SQLite at the 2026-11-28 read-only check; manual dashboard registration is a separate path | NOT VERIFIED |
+| Public release | beta.5 draft; beta.3 latest public signed beta | PENDING |
+
+APK: `zalgps-10.2.0-beta.5.apk` (70,819,738 bytes). SHA-256:
+```
+24f9e58a1df651f7d0213dbeada1ea51d02eb35b5d9ad4fed4f44525ffe7f951
+```
+The downloaded checksum asset, GitHub asset digest and release metadata matched. The CI signing certificate SHA-256 matches beta.3:
+```
+1779fcc58da759bb71b1b65995039fa1cab6205361d53095005565e8dc52367f
+```
+These are artifact verification results, not evidence of successful on-device installation or GPS delivery.
 
 ## SDK stack
 
@@ -59,7 +76,7 @@ Initial verified run after enabling the workflow:
 
 `.github/workflows/beta-release.yml`
 
-Runs for `beta/**` and manual dispatch. It performs all SDK/app verification, builds the beta APK, generates its checksum, uploads the CI artifact, and creates or updates a GitHub Pre-release for the beta version.
+Runs for `beta/**` and manual dispatch. It performs all SDK/app verification, builds the beta APK, generates its checksum, uploads the CI artifact, and stages a signed GitHub draft pre-release for the beta version. Public promotion requires physical-device acceptance.
 
 Initial verified run:
 
@@ -68,7 +85,7 @@ Initial verified run:
 - Tag: `v10.2.0-beta.1`
 - Pre-release: `Traccar Client 10.2.0-beta.1`
 
-The release workflow generates run ID, source commit, APK size, and APK SHA-256 from the artifact built in that same run so release metadata cannot silently retain a checksum from an older build.
+The release workflow generates run ID, source commit, APK size, and APK SHA-256. A beta.4 duplicate draft build exposed a release-notes/asset mismatch that was corrected. Always cross-check release metadata, downloaded checksum and asset digest; avoid multiple builds for the same candidate.
 
 ## Production release isolation
 
@@ -78,9 +95,7 @@ Production checkout also initializes the SDK git submodule recursively.
 
 ## Signing status
 
-The automated beta APK is debug-signed and intended for sideload/device validation. Android requires the same signing certificate for an in-place update, so this beta may not install over an official/differently signed `org.traccar.client` package.
-
-A persistent beta/update channel should use a dedicated private signing keystore injected through protected CI secrets. Signing keys and passwords must not be committed to the public repository.
+Beta.1 and beta.2 used debug signing. Starting with beta.3, release APKs use the dedicated ZalGps signing key via protected CI secrets; beta.5 CI checks the certificate against the public beta.3 certificate. In-place upgrades from the same signed package are expected, subject to real-device verification. Never uninstall a tracked production device or clear its queue merely to resolve a signing conflict.
 
 ## Remaining physical-device validation
 

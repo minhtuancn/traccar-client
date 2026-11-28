@@ -1,6 +1,6 @@
 # ZalGps enrollment service
 
-The API is independent of Traccar and uses its documented REST API. It never modifies the Traccar database directly. No registration occurs until an operator creates an expiring one-use activation code and a client explicitly submits it. The server selects a cryptographically random device identifier and derives the display name from the submitted Android model. The identifier is reserved durably before the upstream call, so retries reuse the same identifier.
+The API is independent of Traccar and uses its documented REST API. It never modifies the Traccar database directly. No registration occurs until an operator creates an expiring one-use activation code and a client explicitly submits it. For a new device, the server selects a cryptographically random identifier and derives the display name from the submitted Android model. Existing-device linking uses the current identifier without creating a device. The identifier is reserved durably before the upstream call, so retries reuse the same identifier.
 
 ## Deploy and configure
 
@@ -34,6 +34,12 @@ In ZalGps, stop tracking and choose **Link existing device**. The code is valid 
 - Response: deviceId, name, serverUrl, config. The current client deliberately uses reviewed local tracking defaults, not arbitrary remote config. Enrollment does not start tracking.
 
 No activation code, installation identifier, upstream token or request body is written to HTTP logs by the service. The database stores hashes of activation codes and installation identifiers. Back up the SQLite state securely. Keep unused activation codes private.
+
+## Operational acceptance
+
+Verify the public HTTPS readiness endpoint, then test new-device registration and existing-device linking on authorized phones. The presence of a manually added device in the dashboard is not evidence of API enrollment. Record only aggregate counts and pass/fail results; do not record activation codes, coordinates, installation secrets, tokens, or personal device IDs in the public repository.
+
+Before deploying an update, back up the service code and SQLite using SQLite's backup API, validate the backup, run backend regression tests, and restart only the provisioning service. Verify readiness and SQLite integrity after deployment. For additive schema changes, roll back code without restoring a stale database over new enrollment records. Do not modify the Traccar database directly.
 
 ## Migration and rollback
 

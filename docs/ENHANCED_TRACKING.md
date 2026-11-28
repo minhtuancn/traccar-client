@@ -2,7 +2,7 @@
 
 This document describes how the `minhtuancn/traccar-client` fork consumes the enhanced `minhtuancn/traccar-client-sdk` fork and how the reliability features interact.
 
-**Current status:** the complete enhanced Android stack is merged to `main` and is being validated as Android beta `10.2.0-beta.1+159`.
+**Current status:** the complete enhanced Android stack is merged to `main` and is being validated as signed Android beta candidate `10.2.0-beta.5+163`.
 
 ## Scope
 

@@ -1,6 +1,8 @@
-# ZalGps — ordered roadmap and handoff
+# ZalGps — parallel roadmap and handoff
 
 Updated 2026-11-28. This is the current client/provisioning roadmap; the older resilient tracking plan records historical SDK work. See [BUILD_STATUS](BUILD_STATUS.md) for verified evidence and [CHANGELOG](../CHANGELOG.md) for implemented features.
+
+P0–P3 development may proceed in parallel by operator direction. Release and deployment gates remain independent; no unverified runtime changes to production.
 
 ## P0 — close beta.5 acceptance (current)
 
@@ -24,7 +26,7 @@ Automated acceptance: PASS at runtime candidate and main CI; release-integrity c
 
 ## P1 — in-app update check
 
-Status: DESIGN ONLY, not implemented. Depends on P0 for first published compatible beta. Implement in a separate reviewed increment after acceptance.
+Status: initial strict manifest parser and version-code tests implemented in the parallel development branch. Release metadata generation, network check, UI, APK download/actual package and signature verification, and Android installer remain pending. Public rollout remains gated by acceptance.
 
 - Use published, non-draft releases from the fixed official fork repository; opt-in beta channel, compare Android version codes rather than timestamps or lexicographic versions.
 - Use HTTPS, reject untrusted URLs/redirects, cap response/download size, handle network errors and no update without blocking startup.
@@ -34,7 +36,7 @@ Status: DESIGN ONLY, not implemented. Depends on P0 for first published compatib
 
 ## P2 — remote configuration
 
-Status: DESIGN ONLY, not implemented. Requires stable enrollment/link lifecycle and explicit device authentication. Do not treat a public device identifier as an authentication secret.
+Status: initial pure versioned configuration policy and tests implemented. No network endpoint, device authentication, application of remote configuration or production deployment yet. Requires stable enrollment/link lifecycle, explicit informed consent and device authentication. Do not treat a public device identifier as an authentication secret.
 
 - Design a scoped authenticated per-installation channel and explicit administrator/device assignment with revocation, audit, and retry/rollback.
 - Define versioned allowlisted tracking parameters with type/range validation, stale/replayed revision rejection, local safe defaults, and previous known-good config.
@@ -44,6 +46,8 @@ Status: DESIGN ONLY, not implemented. Requires stable enrollment/link lifecycle 
 
 ## P3 — reliability and battery acceptance
 
+Initial diagnostic refresh coalescing and stale-data warning implemented; see [field acceptance](FIELD_ACCEPTANCE.md). Real-device measurements and remaining gates are pending.
+
 - Long-running stationary and motion tests, charging/Battery Saver profiles, Doze and OEM restrictions.
 - Offline/Batch/Instant queue delivery, stale heartbeat protection, ordinary process/reboot recovery and explicit Stop persistence.
 - Measure battery use, sync latency and queue integrity on actual target phones; document device model and OS without personal identifiers.
@@ -51,4 +55,4 @@ Status: DESIGN ONLY, not implemented. Requires stable enrollment/link lifecycle 
 
 ## Agent workflow
 
-Read current source and CI evidence before making changes. Finish existing PRs sequentially and avoid speculative PRs. Work on shared storage, keep credentials and device data outside public repositories. Use immutable SDK pins, test exact SHAs, keep signed draft releases until physical acceptance. Never change unrelated services, bypass Android permissions, restart explicitly stopped tracking, or report unverified steps as passed.
+Read current source and CI evidence before making changes. Develop independent P0–P3 changes in parallel worktrees, consolidate compatible changes into a reviewed PR, and avoid speculative PRs. Work on shared storage, keep credentials and device data outside public repositories. Use immutable SDK pins, test exact SHAs, keep signed draft releases until physical acceptance. Never change unrelated services, bypass Android permissions, restart explicitly stopped tracking, or report unverified steps as passed.

@@ -7,7 +7,8 @@ Updated 2026-11-28. This is the current client/provisioning roadmap; the older r
 - [x] PR #6 merged, Android CI passed, 17 provisioning tests passed.
 - [x] Deploy existing-device linking backend; verify readiness and database integrity.
 - [x] Signed beta.5 draft built; verify certificate and checksum.
-- [ ] Upgrade an existing authorized beta.4 installation without clearing data.
+- [x] Functional upgrade from beta.4 to beta.5 on a Samsung phone — operator confirmed normal operation.
+- [ ] Confirm upgrade preserved ID, settings and queued positions without clearing data.
 - [ ] Link its existing device ID and verify no duplicate.
 - [ ] New-device enrollment on separate authorized fresh installation.
 - [x] Genuine GPS delivery/history on beta.5 — operator confirmed.
@@ -17,7 +18,7 @@ Updated 2026-11-28. This is the current client/provisioning roadmap; the older r
 
 P0 recheck: full APK download checksum verified; latest main CI green; live HTTPS health/readiness 200; malformed enrollment rejected.
 
-P0 follow-up: operator reports successful use on two physical Samsung phones; backend independently confirms one completed new-device enrollment. Existing-device linking still has zero completed records. Operator confirms one phone on beta.4 and one on beta.5, with history viewable for both. Real-device beta.5 GPS/history functionality is operator-confirmed; upgrade preservation, existing-ID linking and remaining tracking acceptance checks are pending. Manual dashboard registration is not proof of API success. The operator must test on a physical phone. Do not fabricate GPS or create test devices in production without explicit authorization.
+P0 follow-up: operator reports successful use on two physical Samsung phones; backend independently confirms one completed new-device enrollment. Existing-device linking still has zero completed records. Operator initially confirmed one phone on beta.4 and one on beta.5, with history viewable for both; subsequently upgraded the remaining beta.4 phone and confirmed normal operation. Both now run beta.5. Real-device GPS/history and functional upgrade are operator-confirmed; explicit identity/configuration/queue preservation, existing-ID linking and remaining tracking acceptance checks are pending. Manual dashboard registration is not proof of API success. The operator must test on a physical phone. Do not fabricate GPS or create test devices in production without explicit authorization.
 
 Automated acceptance: PASS at runtime candidate and main CI; release-integrity checks passed with real artifact and mocked draft creation. Physical-device acceptance remains the release gate. No new signed build is needed solely for documentation or test-only changes.
 

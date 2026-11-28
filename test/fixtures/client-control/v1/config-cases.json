@@ -1,0 +1,202 @@
+[
+  {
+    "name": "valid defaults",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 1,
+      "revision": 1,
+      "settings": {
+        "interval": 30,
+        "distance": 25,
+        "heartbeat": 300,
+        "accuracy": "high",
+        "adaptive_tracking": true,
+        "sync_mode": "instant",
+        "sync_batch_size": 25,
+        "sync_batch_interval": 60,
+        "heartbeat_max_age": 300
+      }
+    },
+    "accepted": true
+  },
+  {
+    "name": "valid ordered patch",
+    "currentRevision": 1,
+    "payload": {
+      "schema": 1,
+      "revision": 2,
+      "settings": {
+        "sync_mode": "batch",
+        "distance": 40
+      }
+    },
+    "accepted": true
+  },
+  {
+    "name": "identity",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 1,
+      "revision": 1,
+      "settings": {
+        "id": "synthetic"
+      }
+    },
+    "accepted": false
+  },
+  {
+    "name": "server URL",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 1,
+      "revision": 1,
+      "settings": {
+        "url": "https://example.invalid/"
+      }
+    },
+    "accepted": false
+  },
+  {
+    "name": "start tracking",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 1,
+      "revision": 1,
+      "settings": {
+        "tracking": true
+      }
+    },
+    "accepted": false
+  },
+  {
+    "name": "permission",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 1,
+      "revision": 1,
+      "settings": {
+        "permissions": true
+      }
+    },
+    "accepted": false
+  },
+  {
+    "name": "hidden notification",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 1,
+      "revision": 1,
+      "settings": {
+        "notification": false
+      }
+    },
+    "accepted": false
+  },
+  {
+    "name": "zero interval",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 1,
+      "revision": 1,
+      "settings": {
+        "interval": 0
+      }
+    },
+    "accepted": false
+  },
+  {
+    "name": "boolean interval",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 1,
+      "revision": 1,
+      "settings": {
+        "interval": true
+      }
+    },
+    "accepted": false
+  },
+  {
+    "name": "empty patch",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 1,
+      "revision": 1,
+      "settings": {}
+    },
+    "accepted": false
+  },
+  {
+    "name": "unknown accuracy",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 1,
+      "revision": 1,
+      "settings": {
+        "accuracy": "highest"
+      }
+    },
+    "accepted": false
+  },
+  {
+    "name": "invalid sync",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 1,
+      "revision": 1,
+      "settings": {
+        "sync_mode": "other"
+      }
+    },
+    "accepted": false
+  },
+  {
+    "name": "buffer deletion",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 1,
+      "revision": 1,
+      "settings": {
+        "buffer": false
+      }
+    },
+    "accepted": false
+  },
+  {
+    "name": "stale revision",
+    "currentRevision": 3,
+    "payload": {
+      "schema": 1,
+      "revision": 3,
+      "settings": {
+        "interval": 30
+      }
+    },
+    "accepted": false
+  },
+  {
+    "name": "wrong schema",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 2,
+      "revision": 1,
+      "settings": {
+        "interval": 30
+      }
+    },
+    "accepted": false
+  },
+  {
+    "name": "caller supplied tenant",
+    "currentRevision": 0,
+    "payload": {
+      "schema": 1,
+      "revision": 1,
+      "settings": {
+        "interval": 30
+      },
+      "tenantId": "synthetic"
+    },
+    "accepted": false
+  }
+]

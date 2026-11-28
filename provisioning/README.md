@@ -55,3 +55,5 @@ python3 -m unittest -v
 ```
 
 Physical Android device and real Traccar enrollment tests are required before public release.
+
+The suite includes loopback HTTP integration tests with temporary SQLite and a fake Traccar upstream; it never calls the production Traccar server. Run from the provisioning directory.

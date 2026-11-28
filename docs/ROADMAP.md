@@ -10,7 +10,9 @@ Updated 2026-11-28. This is the current client/provisioning roadmap; the older r
 - [ ] Upgrade an existing authorized beta.4 installation without clearing data.
 - [ ] Link its existing device ID and verify no duplicate.
 - [ ] New-device enrollment on separate authorized fresh installation.
-- [ ] Confirm genuine GPS delivery, explicit Stop and queue preservation.
+- [x] Genuine GPS delivery/history on beta.5 — operator confirmed.
+- [x] Isolated HTTP integration: new/link retry after restart, no duplicates, invalid/expired code and upstream failure (23/23 total provisioning tests).
+- [ ] Confirm explicit Stop, reboot recovery and queue preservation on a physical phone.
 - [ ] Record evidence and promote the exact tested artifact (no rebuild).
 
 P0 recheck: full APK download checksum verified; latest main CI green; live HTTPS health/readiness 200; malformed enrollment rejected.

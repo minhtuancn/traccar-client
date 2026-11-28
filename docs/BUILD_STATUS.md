@@ -118,3 +118,7 @@ Operator reports active use on two physical Samsung Android phones and successfu
 ### P0 follow-up — mixed-version field use
 
 Operator confirms one Samsung phone runs beta.4 and one runs beta.5; history is viewable for both in Traccar Manager. This establishes operator-reported real-device GPS/history functionality for beta.5 alongside beta.4. It does not yet establish an in-place beta.4 to beta.5 upgrade, preserved identity/configuration/queue, successful existing-ID linking, explicit Stop/reboot behavior or long-running battery performance. No personal device identifiers or locations recorded.
+
+### P0 follow-up — isolated HTTP acceptance
+
+Added `provisioning/test_http.py`: six integration tests using the real HTTP handler on loopback, a temporary SQLite database and a fake Traccar upstream. All 23 provisioning tests passed locally (17 previous + 6 HTTP). Coverage includes restart-safe retries for new and linked devices, no duplicate creation, wrong-ID and wrong-installation rejection, expired codes, upstream failure and readiness. No production records, credentials or devices were used; the signed beta.5 runtime remains unchanged. Physical-device upgrade, link and Stop/reboot/queue acceptance remain open.

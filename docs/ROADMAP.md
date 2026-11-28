@@ -13,7 +13,9 @@ Updated 2026-11-28. This is the current client/provisioning roadmap; the older r
 - [ ] Confirm genuine GPS delivery, explicit Stop and queue preservation.
 - [ ] Record evidence and promote the exact tested artifact (no rebuild).
 
-Blocker: no completed API enrollment/link record at the last read-only check. Manual dashboard registration is not proof of API success. The operator must test on a physical phone. Do not fabricate GPS or create test devices in production without explicit authorization.
+P0 recheck: full APK download checksum verified; latest main CI green; live HTTPS health/readiness 200; malformed enrollment rejected.
+
+Blocker: no completed API enrollment/link record at the 2026-11-28 recheck. Manual dashboard registration is not proof of API success. The operator must test on a physical phone. Do not fabricate GPS or create test devices in production without explicit authorization.
 
 ## P1 — in-app update check
 

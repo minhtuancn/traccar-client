@@ -28,6 +28,8 @@ The downloaded checksum asset, GitHub asset digest and release metadata matched.
 ```
 These are artifact verification results, not evidence of successful on-device installation or GPS delivery.
 
+P0 recheck (2026-11-28): downloaded the full signed draft APK to shared storage and ran `sha256sum -c` successfully (70,819,738 bytes). Main documentation commit `75d9f77` passed [Build](https://github.com/minhtuancn/traccar-client/actions/runs/46097343449) and [Flutter Analyze](https://github.com/minhtuancn/traccar-client/actions/runs/46097343440). Runtime source is unchanged from the candidate. Public health/readiness returned HTTP 200 with TLS verification successful; an invalid activation request returned HTTP 400. SQLite integrity remained OK and completed new enrollments/links were both zero. No connected Android test runner was available on the development host. P0 remains blocked on authorized physical-device evidence; do not promote the draft or start P1 until that gate is satisfied.
+
 ## SDK stack
 
 The full SDK enhancement stack is merged to `minhtuancn/traccar-client-sdk` `main`:

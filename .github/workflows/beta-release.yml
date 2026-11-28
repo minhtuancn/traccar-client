@@ -150,6 +150,8 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk "$APK"
           sha256sum "$APK" > "$APK.sha256"
 
+          python3 tool/generate_update_manifest.py "$APK" "$(awk '/^version:/{print $2}' pubspec.yaml)" "$(cat signing-certificate.sha256)"
+
           APK_SHA=$(sha256sum "$APK" | awk '{print $1}')
           APK_SIZE=$(stat -c%s "$APK")
           cp docs/BETA_RELEASE.md release-notes.md
@@ -169,6 +171,7 @@ jobs:
           path: |
             ${{ steps.version.outputs.apk }}
             ${{ steps.version.outputs.apk }}.sha256
+            zalgps-${{ steps.version.outputs.version }}.update.json
           if-no-files-found: error
           retention-days: 90
 
@@ -191,7 +194,7 @@ jobs:
             echo "::error::Release already exists; refusing to replace its assets."
             exit 1
           fi
-          gh release create "$RELEASE_TAG" "$APK" "$APK.sha256" \
+          gh release create "$RELEASE_TAG" "$APK" "$APK.sha256" "zalgps-$VERSION.update.json" \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "ZalGps $VERSION" --notes-file release-notes.md --draft --prerelease
 
@@ -207,3 +210,12 @@ jobs:
           jq -e '.draft == true and .prerelease == true' staged-release.json >/dev/null
           python3 tool/verify_release_metadata.py staged-release.json . \
             --version "$VERSION" --commit "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID"
+          python3 - "$VERSION" <<'PYVERIFY'
+          import json, sys, hashlib
+          from pathlib import Path
+          name = f"zalgps-{sys.argv[1]}.update.json"
+          data = Path(name).read_bytes()
+          matches = [a for a in json.loads(Path("staged-release.json").read_text())["assets"] if a["name"] == name]
+          assert len(matches) == 1 and matches[0]["size"] == len(data)
+          assert matches[0]["digest"] == "sha256:" + hashlib.sha256(data).hexdigest()
+          PYVERIFY

@@ -4,6 +4,10 @@ Updated 2026-11-28. This is the current client/provisioning roadmap; the older r
 
 P0–P3 development may proceed in parallel by operator direction. Release and deployment gates remain independent; no unverified runtime changes to production.
 
+## Approved cross-repository architecture (2026-11-28)
+
+The product owner approved a single Go V2 management API and Next.js dashboard in [ZalGPS-server](https://github.com/vietkeynet/ZalGPS-server). Read the authoritative [control-plane ADR](https://github.com/vietkeynet/ZalGPS-server/blob/0e633016a/v2/docs/client-control-plane.md), [V2 TODO](https://github.com/vietkeynet/ZalGPS-server/blob/feat/zalgps-v2-go/v2/TODO.md) and CTRL-01–CTRL-05. Server owns enrollment, config profiles/revisions/ack, release catalog, diagnostics and management UI; Client owns local consent, independent validation, GPS, queue, APK verification and normal OS installer. Existing Python/SQLite production provisioning remains unchanged; its isolated P2 prototype is a contract/test reference, not a competing permanent API. Coordinate schema and synthetic contract fixtures with CTRL-01 before adding any live config endpoint or automatic apply. Preserve beta.5 and existing IDs/history until explicit migration approval. P0/P1/P3 can continue independently. Latest Client installer CI at 25db87e failed and must be resolved before merge or beta.6 build; do not treat earlier green checks as latest acceptance.
+
 ## P0 — close beta.5 acceptance (current)
 
 - [x] PR #6 merged, Android CI passed, 17 provisioning tests passed.

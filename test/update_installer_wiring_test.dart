@@ -8,7 +8,7 @@ void main() {
     final manifest = File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
     final paths = File('android/app/src/main/res/xml/update_file_paths.xml').readAsStringSync();
     expect(manifest, contains('org.traccar.client.UpdateFileProvider'));
-    expect(manifest, contains('android:authorities="${applicationId}.updates"'));
+    expect(manifest, contains(r'android:authorities="${applicationId}.updates"'));
     expect(paths, contains('path="zalgps-updates/"'));
     expect(paths, isNot(contains('root-path')));
     expect(paths, isNot(contains('external-path')));
